@@ -35,10 +35,10 @@ class EpsilonGreedy(Algorithm):
         """
         Selecciona un brazo basado en la política epsilon-greedy.
 
-        :return: índice del brazo seleccionado.
+        :return: Índice del brazo seleccionado.
         """
 
-        # Observa que para para epsilon=0 solo selecciona un brazo y no hace un primer recorrido por todos ellos.
+        # Observa que para epsilon=0 solo selecciona un brazo y no hace un primer recorrido por todos ellos.
         # ¿Podrías modificar el código para que funcione correctamente para epsilon=0?
 
         if np.random.random() < self.epsilon:
