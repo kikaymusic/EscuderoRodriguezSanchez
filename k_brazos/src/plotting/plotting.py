@@ -73,6 +73,45 @@ def plot_optimal_selections(steps: int, optimal_selections: np.ndarray, algorith
     :param optimal_selections: Matriz de porcentaje de selecciones óptimas.
     :param algorithms: Lista de instancias de algoritmos comparados.
     """
+    sns.set_theme(style="whitegrid", palette="muted", font_scale=1.2)
+    plt.figure(figsize=(14, 7))
+    for idx, algorithm in enumerate(algorithms):
+        label = get_algorithm_label(algorithm)
+        plt.plot(range(steps), optimal_selections[idx] * 100, label=label, linewidth=2)
 
-    raise NotImplementedError("Esta función aún no ha sido implementada.")
+    plt.xlabel('Pasos de Tiempo', fontsize=14)
+    plt.ylabel('% Selección Óptima', fontsize=14)
+    plt.title('Porcentaje de Selección del Brazo Óptimo vs Pasos de Tiempo', fontsize=16)
+    plt.legend(title='Algoritmos')
+    plt.ylim([0, 100])
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_arm_statistics(arm_stats: List[dict], algorithms: List[Algorithm], *args):
+    """
+    Mostrar la evolución del rechazo, de forma análoga a cómo se muestra la evolución de las recompensas.
+    Genera gráficas separadas de Selección de Arms:
+    Ganancias vs Pérdidas para cada algoritmo.
+    :param arm_stats: Lista (de diccionarios) con estadísticas de cada brazo por algoritmo.
+    :param algorithms: Lista de instancias de algoritmos comparados.
+    :param args: Opcional. Parámetros que consideres
+    """
+    raise NotImplementedError("Esta función aún no está implementada.")
+
+
+def plot_regret(steps: int, regret_accumulated: np.ndarray, algorithms: List[Algorithm], *args):
+    """
+    Función OPCIONAL.
+    Genera la gráfica de Regret Acumulado vs Pasos de Tiempo.
+    :param steps: Número de pasos de tiempo.
+    :param regret_accumulated: Matriz de regret acumulado (algoritmos x pasos).
+    :param algorithms: Lista de instancias de algoritmos comparados.
+    :param args: Opcional. Parámetros que consideres. P.e. la cota teórica Cte * ln(T).
+    """
+    raise NotImplementedError("Esta función aún no está implementada.")
+
+# TODO Modifique los ficheros bandit_experiment.ipynb y https://github.com/ldaniel-hm/eml_k_bandit/blob/main/plotting/plotting.pyplotting.py para incluir en el estudio original las gráficas indicadas.
+
+# TODO Cuando complete el estudio de la familia de algoritmos epsilon-greedy, indique cuál de todas las gráficas que se piden son las más relevantes ¿por qué es esa gráfica o esas gráficas las más importantes?
 
