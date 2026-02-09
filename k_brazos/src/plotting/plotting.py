@@ -18,7 +18,8 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-from algorithms import Algorithm, EpsilonGreedy
+from ..algorithms.algorithm import Algorithm
+from ..algorithms.epsilon_greedy import EpsilonGreedy
 
 
 def get_algorithm_label(algo: Algorithm) -> str:
