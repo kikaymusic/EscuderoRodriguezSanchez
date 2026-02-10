@@ -20,38 +20,39 @@ import matplotlib.pyplot as plt
 
 from ..algorithms.algorithm import Algorithm
 from ..algorithms.epsilon_greedy import EpsilonGreedy
+from ..algorithms.softmax import Softmax
 from ..algorithms.ucb1 import UCB1
 
-
-def get_algorithm_label(algo: Algorithm) -> str:
+def get_algorithm_label(algo) -> str:
     """
     Genera una etiqueta descriptiva para el algoritmo incluyendo sus parámetros.
 
     :param algo: Instancia de un algoritmo.
-    :type algo: Algorithm
     :return: Cadena descriptiva para el algoritmo.
-    :rtype: str
     """
     label = type(algo).__name__
+    
     if isinstance(algo, EpsilonGreedy):
         label += f" (epsilon={algo.epsilon})"
     elif isinstance(algo, UCB1):
         label += f" (c={algo.c})"
-    # elif isinstance(algo, OtroAlgoritmo):
-    #     label += f" (parametro={algo.parametro})"
-    # Añadir más condiciones para otros algoritmos aquí
-    else:
-        raise ValueError("El algoritmo debe ser de la clase Algorithm o una subclase.")
-    return label
+    
+    elif isinstance(algo, Softmax):
+        # Aquí añadimos la lógica para tu nuevo algoritmo
+        label += f" (tau={algo.tau})"
 
+    
+    
+    else:
+
+        raise ValueError("El algoritmo debe ser de la clase Algorithm o una subclase.")
+    
+        
+    return label
 
 def plot_average_rewards(steps: int, rewards: np.ndarray, algorithms: List[Algorithm]):
     """
     Genera la gráfica de Recompensa Promedio vs Pasos de Tiempo.
-
-    :param steps: Número de pasos de tiempo.
-    :param rewards: Matriz de recompensas promedio.
-    :param algorithms: Lista de instancias de algoritmos comparados.
     """
     sns.set_theme(style="whitegrid", palette="muted", font_scale=1.2)
 
@@ -66,7 +67,6 @@ def plot_average_rewards(steps: int, rewards: np.ndarray, algorithms: List[Algor
     plt.legend(title='Algoritmos')
     plt.tight_layout()
     plt.show()
-
 
 def plot_optimal_selections(steps: int, optimal_selections: np.ndarray, algorithms: List[Algorithm]):
     """
