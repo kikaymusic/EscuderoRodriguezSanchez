@@ -30,10 +30,12 @@ def get_algorithm_label(algo) -> str:
     :param algo: Instancia de un algoritmo.
     :return: Cadena descriptiva para el algoritmo.
     """
+
     label = type(algo).__name__
     
     if isinstance(algo, EpsilonGreedy):
         label += f" (epsilon={algo.epsilon})"
+
     elif isinstance(algo, UCB1):
         label += f" (c={algo.c})"
     
@@ -100,7 +102,18 @@ def plot_arm_statistics(arm_stats: List[dict], algorithms: List[Algorithm], *arg
     :param algorithms: Lista de instancias de algoritmos comparados.
     :param args: Opcional. Parámetros que consideres
     """
-    raise NotImplementedError("Esta función aún no está implementada.")
+    sns.set_theme(style="whitegrid", palette="muted", font_scale=1.2)
+    plt.figure(figsize=(14, 7))
+    for idx, algo in enumerate(algorithms):
+        label = get_algorithm_label(algo)
+        plt.plot(range(len(arm_stats[idx]["wins"])), arm_stats[idx]["wins"], label=f"{label} - Wins", linewidth=2)
+        plt.plot(range(len(arm_stats[idx]["losses"])), arm_stats[idx]["losses"], label=f"{label} - Losses", linewidth=2)
+    plt.xlabel('Pasos de Tiempo', fontsize=14)
+    plt.ylabel('Selección de Brazos', fontsize=14)
+    plt.title('Selección de Brazos vs Pasos de Tiempo', fontsize=16)
+    plt.legend(title='Algoritmos')
+    plt.tight_layout()
+    plt.show()
 
 
 def plot_regret(steps: int, regret_accumulated: np.ndarray, algorithms: List[Algorithm], *args):
@@ -112,9 +125,15 @@ def plot_regret(steps: int, regret_accumulated: np.ndarray, algorithms: List[Alg
     :param algorithms: Lista de instancias de algoritmos comparados.
     :param args: Opcional. Parámetros que consideres. P.e. la cota teórica Cte * ln(T).
     """
-    raise NotImplementedError("Esta función aún no está implementada.")
-
-# TODO Modifique los ficheros bandit_experiment.ipynb y https://github.com/ldaniel-hm/eml_k_bandit/blob/main/plotting/plotting.pyplotting.py para incluir en el estudio original las gráficas indicadas.
-
-# TODO Cuando complete el estudio de la familia de algoritmos epsilon-greedy, indique cuál de todas las gráficas que se piden son las más relevantes ¿por qué es esa gráfica o esas gráficas las más importantes?
+    sns.set_theme(style="whitegrid", palette="muted", font_scale=1.2)
+    plt.figure(figsize=(14, 7))
+    for idx, algo in enumerate(algorithms):
+        label = get_algorithm_label(algo)
+        plt.plot(range(steps), regret_accumulated[idx], label=label, linewidth=2)
+    plt.xlabel('Pasos de Tiempo', fontsize=14)
+    plt.ylabel('Regret Acumulado', fontsize=14)
+    plt.title('Regret Acumulado vs Pasos de Tiempo', fontsize=16)
+    plt.legend(title='Algoritmos')
+    plt.tight_layout()
+    plt.show()
 
