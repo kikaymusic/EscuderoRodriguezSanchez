@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 
 from ..algorithms.algorithm import Algorithm
 from ..algorithms.epsilon_greedy import EpsilonGreedy
+from ..algorithms.ucb1 import UCB1
 
 
 def get_algorithm_label(algo: Algorithm) -> str:
@@ -34,6 +35,8 @@ def get_algorithm_label(algo: Algorithm) -> str:
     label = type(algo).__name__
     if isinstance(algo, EpsilonGreedy):
         label += f" (epsilon={algo.epsilon})"
+    elif isinstance(algo, UCB1):
+        label += f" (c={algo.c})"
     # elif isinstance(algo, OtroAlgoritmo):
     #     label += f" (parametro={algo.parametro})"
     # Añadir más condiciones para otros algoritmos aquí
