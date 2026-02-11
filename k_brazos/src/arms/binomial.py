@@ -1,5 +1,5 @@
 import numpy as np
-from arms.arm import Arm  # Ajusta el import según tu estructura (igual que en armnormal.py)
+from .arm import Arm  # Ajusta el import según tu estructura (igual que en armnormal.py)
 
 class ArmBinomial(Arm):
     def __init__(self, n: int, p: float):

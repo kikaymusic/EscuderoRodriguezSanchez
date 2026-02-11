@@ -1,6 +1,6 @@
 
 import numpy as np
-from arms.arm import Arm
+from .arm import Arm
 
 class ArmBernoulli(Arm):
     def __init__(self, p: float):
