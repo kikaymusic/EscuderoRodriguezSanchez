@@ -12,7 +12,6 @@ with the additional restriction that it may not be used for commercial purposes.
 For more details about GPL-3.0: https://www.gnu.org/licenses/gpl-3.0.html
 """
 
-
 # Importación de módulos o clases
 from .arm import Arm
 from .armbernoulli import ArmBernoulli
