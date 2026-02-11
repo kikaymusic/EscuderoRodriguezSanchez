@@ -30,12 +30,12 @@ class Softmax(Algorithm):
         """
         
         # 1. Recuperamos Q(a) (valores estimados) de la clase padre
-        Q_values = self.values
+        q_values = self.values
         
         # 2. Aplicamos la fórmula del exponente: exp(Q(a) / tau)
         # Nota técnica: Restamos el máximo (z - max(z)) antes de exponenciar 
         # para evitar errores numéricos (overflow) en Python. La matemática se mantiene proporcional.
-        z = Q_values / self.tau
+        z = q_values / self.tau
         max_z = np.max(z)
         exp_values = np.exp(z - max_z)
         

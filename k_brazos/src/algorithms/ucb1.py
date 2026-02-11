@@ -26,25 +26,25 @@ class UCB1(Algorithm):
         Valor UCB1(a) = Qt(a) + u(a)
         Siendo u(a) = c * sqrt((log(t)) / N(a))
         
-        :return: índice del brazo seleccionado.
+        :return: Índice del brazo seleccionado.
         """
         # Si hay algún brazo que no se ha seleccionado todavía, lo seleccionamos
         # Esto evita problemas de división por cero en el cálculo de u(a) y asegura que cada brazo se seleccione al menos una vez.
         if 0 in self.counts:
             # Buscamos el primer brazo que no ha sido seleccionado
-            return np.argmin(self.counts)
+            return int(np.argmin(self.counts))
 
         # Calculamos el paso en el que estamos contando el total de selecciones de brazos
         t = np.sum(self.counts)
 
-        # Obtenemos el termino de explotación Qt(a)
-        Qa = self.values
+        # Obtenemos el término de explotación Qt(a)
+        q_a = self.values
 
-        # Calculamos el termino de exploración u(a) = (c * sqrt((log(t)) / N(a)))
+        # Calculamos el término de exploración u(a) = (c * sqrt((log(t)) / N(a)))
         ua = self.c * np.sqrt(np.log(t) / self.counts)
 
         # Calculamos el valor de UCB1 = Qt(a) + u(a)
-        ucb_values = Qa + ua
+        ucb_values = q_a + ua
 
         # Seleccionamos el brazo con el valor de UCB1 más alto
-        return np.argmax(ucb_values)
+        return int(np.argmax(ucb_values))
