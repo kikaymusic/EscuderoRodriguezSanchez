@@ -23,6 +23,8 @@ from ..algorithms.epsilon_greedy import EpsilonGreedy
 from ..algorithms.softmax import Softmax
 from ..algorithms.ucb1 import UCB1
 
+sns.set_theme(style="whitegrid", palette="muted", font_scale=1.2)
+
 def get_algorithm_label(algo) -> str:
     """
     Genera una etiqueta descriptiva para el algoritmo incluyendo sus parámetros.
@@ -53,7 +55,6 @@ def plot_average_rewards(steps: int, rewards: np.ndarray, algorithms: List[Algor
     """
     Genera la gráfica de Recompensa Promedio vs Pasos de Tiempo.
     """
-    sns.set_theme(style="whitegrid", palette="muted", font_scale=1.2)
     plt.figure(figsize=(14, 7))
     for idx, algo in enumerate(algorithms):
         label = get_algorithm_label(algo)
@@ -74,7 +75,6 @@ def plot_optimal_selections(steps: int, optimal_selections: np.ndarray, algorith
     :param optimal_selections: Matriz de porcentaje de selecciones óptimas.
     :param algorithms: Lista de instancias de algoritmos comparados.
     """
-    sns.set_theme(style="whitegrid", palette="muted", font_scale=1.2)
     plt.figure(figsize=(14, 7))
     for idx, algorithm in enumerate(algorithms):
         label = get_algorithm_label(algorithm)
@@ -120,7 +120,6 @@ def plot_regret(steps: int, regret_accumulated: np.ndarray, algorithms: List[Alg
     :param algorithms: Lista de instancias de algoritmos comparados.
     :param args: Opcional. Parámetros que consideres. P.e. la cota teórica Cte * ln(T).
     """
-    sns.set_theme(style="whitegrid", palette="muted", font_scale=1.2)
     plt.figure(figsize=(14, 7))
     for idx, algo in enumerate(algorithms):
         label = get_algorithm_label(algo)
