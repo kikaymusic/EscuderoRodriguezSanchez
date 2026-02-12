@@ -2,8 +2,8 @@ from typing import List
 
 import numpy as np
 
-from k_brazos.src.algorithms import Algorithm
-from k_brazos.src.arms import Bandit
+from .algorithms import Algorithm
+from .arms import Bandit
 
 
 def run_experiment(bandit: Bandit, algorithms: List[Algorithm], steps: int, runs: int, seed: int):
