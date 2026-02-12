@@ -34,7 +34,7 @@ def get_algorithm_label(algo) -> str:
     """
 
     label = type(algo).__name__
-    
+
     if isinstance(algo, EpsilonGreedy):
         label += f" (epsilon={algo.epsilon})"
 
@@ -82,7 +82,7 @@ def plot_optimal_selections(steps: int, optimal_selections: np.ndarray, algorith
 
     plt.xlabel('Pasos de Tiempo', fontsize=14)
     plt.ylabel('% Selección Óptima', fontsize=14)
-    plt.title('Porcentaje de Selección del Brazo Óptimo vs Pasos de Tiempo', fontsize=16)
+    plt.title(f'Porcentaje de Selección del Brazo Óptimo vs Pasos de Tiempo', fontsize=16)
     plt.legend(title='Algoritmos', bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.ylim([0, 100])
     plt.tight_layout()
@@ -97,16 +97,36 @@ def plot_arm_statistics(arm_stats: List[dict], algorithms: List[Algorithm], *arg
     :param algorithms: Lista de instancias de algoritmos comparados.
     :param args: Opcional. Parámetros que consideres
     """
-    sns.set_theme(style="whitegrid", palette="muted", font_scale=1.2)
-    plt.figure(figsize=(14, 7))
+    num_algos = len(algorithms)
+
+    # Creamos subplots: uno para cada algoritmo, dispuestos en fila
+    fig, axes = plt.subplots(1, num_algos, figsize=(6 * num_algos, 5), sharey=True)
+
+    # Aseguramos que axes sea una lista si solo hay un algoritmo
+    if num_algos == 1:
+        axes = [axes]
+
     for idx, algo in enumerate(algorithms):
+        ax = axes[idx]
         label = get_algorithm_label(algo)
-        plt.plot(range(len(arm_stats[idx]["wins"])), arm_stats[idx]["wins"], label=f"{label} - Wins", linewidth=2)
-        #plt.plot(range(len(arm_stats[idx]["losses"])), arm_stats[idx]["losses"], label=f"{label} - Losses", linewidth=2)  # Losses = 1 - wins
-    plt.xlabel('Pasos de Tiempo', fontsize=14)
-    plt.ylabel('Selección de Brazos', fontsize=14)
-    plt.title('Selección de Brazos vs Pasos de Tiempo', fontsize=16)
-    plt.legend(title='Algoritmos', bbox_to_anchor=(1.05, 1), loc='upper left')
+
+        steps = range(len(arm_stats[idx]["wins"]))
+
+        # Graficamos Wins (Óptimo) y Losses (No óptimo)
+        ax.plot(steps, arm_stats[idx]["wins"] * 100, label="Wins (Optimal)", color='green', linewidth=2)
+        ax.plot(steps, arm_stats[idx]["losses"] * 100, label="Losses (Suboptimal)", color='red', linestyle='--',
+                linewidth=2)
+
+        ax.set_title(f"Algoritmo: {label}")
+        ax.set_xlabel('Pasos de Tiempo')
+        ax.set_ylim([-5, 105])  # Margen para ver bien el 0 y 100
+
+        if idx == 0:
+            ax.set_ylabel('% Selección de Brazo')
+
+        ax.legend(loc='center right')
+
+    plt.suptitle('Estadísticas de Selección por Algoritmo', fontsize=16, y=1.05)
     plt.tight_layout()
     plt.show()
 
@@ -126,7 +146,7 @@ def plot_regret(steps: int, regret_accumulated: np.ndarray, algorithms: List[Alg
         plt.plot(range(steps), regret_accumulated[idx], label=label, linewidth=2)
     plt.xlabel('Pasos de Tiempo', fontsize=14)
     plt.ylabel('Regret Acumulado', fontsize=14)
-    plt.title('Regret Acumulado vs Pasos de Tiempo', fontsize=16)
+    plt.title(f'Regret Acumulado vs Pasos de Tiempo', fontsize=16)
     plt.legend(title='Algoritmos', bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.tight_layout()
     plt.show()
