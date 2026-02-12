@@ -56,7 +56,7 @@ class Bandit:
         """
 
         optimal_arm = np.argmax(self.expected_rewards)
-        return optimal_arm
+        return int(optimal_arm)
 
     def get_expected_rewards(self) -> List[float]:
         """
