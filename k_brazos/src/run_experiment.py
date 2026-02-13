@@ -4,9 +4,10 @@ import numpy as np
 
 from .algorithms import Algorithm
 from .arms import Bandit
+from .utils import SEMILLA
 
 
-def run_experiment(bandit: Bandit, algorithms: List[Algorithm], steps: int, runs: int, seed: int):
+def run_experiment(bandit: Bandit, algorithms: List[Algorithm], steps: int, runs: int):
 
     optimal_arm = bandit.optimal_arm  # Necesario para calcular el porcentaje de selecciones óptimas.
 
@@ -23,7 +24,7 @@ def run_experiment(bandit: Bandit, algorithms: List[Algorithm], steps: int, runs
             "losses": np.zeros(steps)
         })
 
-    np.random.seed(seed)  # Asegurar reproducibilidad de resultados.
+    np.random.seed(SEMILLA)  # Asegurar reproducibilidad de resultados.
 
     for run in range(runs):
         current_bandit = Bandit(arms=bandit.arms)
