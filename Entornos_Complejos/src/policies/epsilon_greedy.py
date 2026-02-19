@@ -1,4 +1,7 @@
 # Política epsilon-soft. Se usa para el entrenamiento
+import numpy as np
+
+
 def random_epsilon_greedy_policy(Q, epsilon, state, nA):
     pi_A = np.ones(nA, dtype=float) * epsilon / nA
     best_action = np.argmax(Q[state])
