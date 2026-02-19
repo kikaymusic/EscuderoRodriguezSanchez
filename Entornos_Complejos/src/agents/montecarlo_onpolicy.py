@@ -1,7 +1,8 @@
 import numpy as np
+from .agent import Agent
 
 
-class AgentMonteCarloEveryVisitOnPolicy:
+class AgentMonteCarloOnPolicy(Agent):
     def __init__(self, env, epsilon=0.4, decay=False, discount_factor=1.0, seed=100):
         self.env = env
         self.nA = env.action_space.n
