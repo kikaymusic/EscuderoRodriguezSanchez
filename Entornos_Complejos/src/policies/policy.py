@@ -1,23 +1,16 @@
 from abc import ABC, abstractmethod
 
 class Policy(ABC):
-    @classmethod
-    def __init__(self):
-        """
-        Inicializamos todo lo necesario para la política
-        """
+
+    @abstractmethod
+    def get_action(self, state, q_values=None):
+        """Devuelve una acción dado un estado (y opcionalmente los valores Q)."""
         raise NotImplementedError("This method must be implemented by the subclass.")
 
     @abstractmethod
-    def select_action(self, state, training=True):
+    def get_probability(self, state, action, q_values=None):
         """
-        Lógica para elegir acción
-        """
-        raise NotImplementedError("This method must be implemented by the subclass.")
-
-    @abstractmethod
-    def update(self, trajectory):
-        """
-        Actualización de la política
+        Devuelve la probabilidad de tomar una 'action' en un 'state'.
+        ¡Crucial para el Importance Sampling en Monte Carlo Off-Policy!
         """
         raise NotImplementedError("This method must be implemented by the subclass.")
