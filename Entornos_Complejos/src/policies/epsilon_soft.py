@@ -72,3 +72,25 @@ class EpsilonSoftPolicy(Policy):
         
         # Si no es una acción greedy, devolvemos la probabilidad básica de acción no greedy (epsilon / |A(s)|)
         return self.epsilon / self.n_actions
+    
+    def get_action_probabilities(self, state, q_values=None):
+        """
+        Calcula la distribución de probabilidad completa para todas las acciones en un estado.
+
+        :param state: (int o tuple): El estado actual del entorno.
+        :param q_values: (dict o np.ndarray): Estructura de datos con los valores Q actuales.
+        :return: np.ndarray: Un array de tamaño `n_actions` con la probabilidad de cada acción.
+        """
+        # Inicializamos todas las acciones con la probabilidad base (epsilon / |A(s)|)
+        probabilities = np.ones(self.n_actions, dtype=float) * (self.epsilon / self.n_actions)
+
+        # Buscamos el valor más alto dentro del array Q
+        max_q = np.max(q_values[state])
+        # Obtenemos los índices de todas las acciones que tengan el valor Q máximo
+        best_actions = np.where(q_values[state] == max_q)[0]
+
+        # Sumamos a las acciones codiciosas (1 - epsilon)
+        # Por si hay varios empates, dividimos la parte greedy entre el número de acciones greedy
+        probabilities[best_actions] += (1.0 - self.epsilon) / len(best_actions)
+
+        return probabilities
