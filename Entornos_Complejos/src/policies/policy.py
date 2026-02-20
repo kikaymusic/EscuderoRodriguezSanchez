@@ -15,3 +15,11 @@ class Policy(ABC):
         Devuelve la probabilidad de tomar una 'action' en un 'state'.
         """
         raise NotImplementedError("This method must be implemented by the subclass.")
+
+    @abstractmethod
+    def get_action_probabilities(self, state, q_values=None):
+        """
+        Calcula la distribución de probabilidad completa para todas las acciones en un estado.
+        Útil para algoritmos como Expected Sarsa que necesitan el vector completo de probabilidades.
+        """
+        raise NotImplementedError("This method must be implemented by the subclass.")
