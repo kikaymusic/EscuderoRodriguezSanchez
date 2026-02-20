@@ -1,21 +1,18 @@
 import numpy as np
 
-from src.policies.policy import Policy
+from Entornos_Complejos.src.policies.policy import Policy
 
-class EpsilonGreedyPolicy(Policy):
+class EpsilonSoftPolicy(Policy):
     """
-    Implementa una política Epsilon-Greedy para la selección de acciones según la definición:
-    - Probabilidad de acción greedy (arg max Q(s, a)): 1 - epsilon + (epsilon / |A(s)|)
+    Implementa una política epsilon-soft para la selección de acciones según la definición:
+    - Probabilidad de acción greedy: 1 - epsilon + (epsilon / |A(s)|)
     - Probabilidad de acción no greedy: epsilon / |A(s)|
     Siendo |A(s)| el número total de acciones disponibles en el estado s.
-
-    Esta política esta basada en epsilon-soft, pero con la diferencia de que en epsilon-greedy tenemos una probabilidad
-    aleatoría de seleccionar otra acción que no sea la greedy (exploración de manera aleatoria).
     """
 
     def __init__(self, epsilon, n_actions, seed=None):
         """
-        :param epsilon: Tasa de exploración (0.0 significa 100% greedy, 1.0 significa 100% aleatorio).
+        :param epsilon: Tasa de exploración.
         :param n_actions: Cantidad de acciones posibles que el agente puede tomar.
         :param seed: Semilla para el generador de números aleatorios. Por defecto es None.
         """
@@ -26,7 +23,7 @@ class EpsilonGreedyPolicy(Policy):
 
     def get_action(self, state, q_values=None):
         """
-        Selecciona una acción para un estado dado siguiendo la política epsilon-greedy.
+        Selecciona una acción para un estado dado siguiendo la política epsilon-soft.
 
         :param state: Estado actual del agente.
         :param q_values: Estructura de datos que contiene los valores Q.
@@ -34,16 +31,24 @@ class EpsilonGreedyPolicy(Policy):
                                           con los valores Q para todas las acciones en ese estado.
         :return: int: El índice de la acción seleccionada.
         """
-        # Exploración aleatoria con probabilidad epsilon
-        if self.rng.random() < self.epsilon:
-            return self.rng.integers(self.n_actions)
-
         # Buscamos el valor más alto dentro del array Q
         max_q = np.max(q_values[state])
         # Obtenemos los índices de todas las acciones que tengan el valor Q máximo
         best_actions = np.where(q_values[state] == max_q)[0]
-        # Seleccionamos aleatoriamente entre las acciones que tengan el valor Q máximo
-        return self.rng.choice(best_actions)
+        # Obtenemos un índice aleatorio de entre todos los posibles
+        # Esta será nuestra acción greedy
+        greedy_action = self.rng.choice(best_actions)
+
+        # Asignamos a todas las acciones la probabilidad base (epsilon / |A(s)|)
+        # De esta forma, todas las acciones tendrán la probabilidad de acción no greedy
+        probabilities = np.full(self.n_actions, self.epsilon / self.n_actions)
+        
+        # Sumamos a la acción codiciosa (1 - epsilon)
+        # De esta forma, la cción codiciosa tendrá la probabilidad de acción greedy (1 - epsilon + (epsilon / |A(s)|))
+        probabilities[greedy_action] += (1 - self.epsilon)
+
+        # Seleccionamos una acción según las probabilidades calculadas
+        return self.rng.choice(self.n_actions, p=probabilities)
 
     def get_probability(self, state, action, q_values=None):
         """
@@ -58,16 +63,16 @@ class EpsilonGreedyPolicy(Policy):
         max_q = np.max(q_values[state])
         # Obtenemos los índices de todas las acciones que tengan el valor Q máximo
         best_actions = np.where(q_values[state] == max_q)[0]
-
+        
         # Comprobamos si la acción pasada como parámetro es una de las acciones greedy
         if action in best_actions:
             # Devolvemos la probabilidad de acción greedy (1 - epsilon + (epsilon / |A(s)|))
             # Por si hay varios empates, dividimos la parte greedy entre el número de acciones greedy
             return ((1 - self.epsilon) / len(best_actions)) + (self.epsilon / self.n_actions)
-
+        
         # Si no es una acción greedy, devolvemos la probabilidad básica de acción no greedy (epsilon / |A(s)|)
         return self.epsilon / self.n_actions
-
+    
     def get_action_probabilities(self, state, q_values=None):
         """
         Calcula la distribución de probabilidad completa para todas las acciones en un estado.
