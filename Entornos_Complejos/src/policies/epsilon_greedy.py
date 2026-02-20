@@ -1,6 +1,6 @@
 import numpy as np
 
-from Entornos_Complejos.src.policies.policy import Policy
+from src.policies.policy import Policy
 
 
 # def random_epsilon_greedy_policy(Q, epsilon, state, nA):
