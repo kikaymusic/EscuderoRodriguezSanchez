@@ -2,12 +2,13 @@ import gymnasium as gym
 from abc import ABC, abstractmethod
 
 class Agent(ABC):
-    @classmethod
+
     def __init__(self, env: gym.Env):
         """
-        Inicializamos todo lo necesario para el aprendizaje
+        Inicializamos tod lo necesario para el aprendizaje
         """
-        raise NotImplementedError("This method must be implemented by the subclass.")
+        self.env = env
+        self.training_rewards = []
 
     @abstractmethod
     def get_action(self, state):
@@ -19,7 +20,7 @@ class Agent(ABC):
         raise NotImplementedError("This method must be implemented by the subclass.")
 
     @abstractmethod
-    def update():
+    def update(self, state, action, reward, next_state, done):
         """
         Con la muestra (s, a, s', r) e información complementaria aplicamos el algoritmo.
         update() no es más que el algoritmo de aprendizaje del agente.
