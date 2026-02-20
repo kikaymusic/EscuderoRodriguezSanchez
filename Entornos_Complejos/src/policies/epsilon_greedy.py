@@ -32,7 +32,6 @@ class EpsilonGreedyPolicy(Policy):
 
     def __init__(self, epsilon, n_actions, seed=None):
         """
-
         :param epsilon: Tasa de exploración (0.0 significa 100% greedy, 1.0 significa 100% aleatorio).
         :param n_actions: Cantidad de acciones posibles que el agente puede tomar.
         :param seed: Semilla para el generador de números aleatorios. Por defecto es None.
@@ -88,3 +87,24 @@ class EpsilonGreedyPolicy(Policy):
 
         # Si no, solo tiene la probabilidad de ser elegida por exploración
         return self.epsilon / self.n_actions
+
+    def get_action_probabilities(self, state, q_values=None):
+        """
+        Calcula la distribución de probabilidad completa para todas las acciones en un estado.
+        Útil para algoritmos como Expected Sarsa que necesitan el vector completo de probabilidades.
+
+        :param state: (int o tuple): El estado actual del entorno.
+        :param q_values: (dict o np.ndarray): Estructura de datos con los valores Q actuales.
+        :return: np.ndarray: Un array de tamaño `n_actions` con la probabilidad de cada acción.
+        """
+        # Inicializamos todas las acciones con la probabilidad base (exploración)
+        probabilities = np.ones(self.n_actions, dtype=float) * (self.epsilon / self.n_actions)
+
+        # Encontramos la(s) mejor(es) acción(es)
+        max_q = np.max(q_values[state])
+        best_actions = np.where(q_values[state] == max_q)[0]
+
+        # Repartimos la probabilidad restante (1 - epsilon) entre las mejores acciones
+        probabilities[best_actions] += (1.0 - self.epsilon) / len(best_actions)
+
+        return probabilities
