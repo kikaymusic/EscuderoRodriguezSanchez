@@ -1,12 +1,38 @@
 from gymnasium.core import Env
 import numpy as np
 from .agent import Agent
-#from Entornos_Complejos.src.policies.epsilon_greedy import random_epsilon_greedy_policy
+from ..policies.policy import Policy
 
 
 class AgentMonteCarlo(Agent):
+    """
+    Implementa el algoritmo de Control de Monte Carlo Off-policy con
+    Muestreo de Importancia Ponderado (Weighted Importance Sampling).
+
+    Es una versión de "todas las visitas" (every-visit), donde los valores Q
+    se actualizan cada vez que se encuentra un par estado-acción en el episodio,
+    no solo la primera vez.
+
+    Attributes:
+        env (Env): El entorno de Gymnasium con el que interactúa el agente.
+        target_policy (Policy): La política que el agente intenta aprender y optimizar (pi).
+        behavior_policy (Policy): La política que el agente usa para generar comportamiento
+                                  y explorar el entorno (b). Si no se provee, asume On-policy.
+        gamma (float): Factor de descuento para futuras recompensas.
+        q_table (dict): Diccionario que almacena los valores Q estimados. Mapea estados a arrays de acciones.
+        c_table (dict): Diccionario que almacena la suma acumulada de los pesos (W).
+                        Crucial para el Weighted Importance Sampling.
+        episode_memory (list): Buffer que guarda la trayectoria del episodio actual como tuplas (S_t, A_t, R_{t+1}).
+    """
     #def __init__(self, env: Env, epsilon=0.4, decay=False, discount_factor=1.0, seed=100):
-    def __init__(self, env: Env, target_policy, behavior_policy, gamma=0.99):
+    def __init__(self, env: Env, target_policy: Policy, behavior_policy: Policy, gamma: float = 0.99):
+        """
+        Constructor del agente Monte Carlo Off-policy con Weighted Importance Sampling.
+        :param env: Entorno de Gymnasium.
+        :param target_policy: Política objetivo.
+        :param behavior_policy: Política de comportamiento.
+        :param gamma: Factor de descuento.
+        """
         super().__init__(env)
 
         self.target_policy = target_policy
@@ -15,58 +41,55 @@ class AgentMonteCarlo(Agent):
         self.gamma = gamma
 
         # Inicializamos Q-Table y C-Table (esta última es para Importance Sampling en off-policy)
-        # Asumiendo espacios discretos por el momento
+        # espacios discretos
         self.q_table = {}
         self.c_table = {}
 
         # Buffer del episodio actual
         self.episode_memory = []
-        
-        #self.nA = env.action_space.n
-        #self.nS = env.observation_space.n
-#
-        #self.epsilon_init = float(epsilon)
-        #self.epsilon = float(epsilon)
-        #self.decay = bool(decay)
-        #self.gamma = float(discount_factor)
-#
-        ## Q(s,a) y contador de visitas para promedio incremental
-        #self.Q = np.zeros((self.nS, self.nA), dtype=float)
-        #self.n_visits = np.zeros((self.nS, self.nA), dtype=float)
-#
-        ## Buffer del episodio: (s, a, r)
-        #self.episode = []
-#
-        ## Estadísticas
-        #self.episode_returns = []
-        #self.episode_lengths = []
-        #self.seed = seed
+
 
     def get_action(self, state):
+        """
+        Selecciona una acción basándose en la política de comportamiento (behavior_policy).
+        :param state: El estado actual del entorno.
+        :return: int: El índice de la acción a tomar.
+        """
         # Siempre nos movemos en el entorno usando la behavior_policy
         return self.behavior_policy.get_action(state, self.q_table)
 
     def update(self, state, action, reward, next_state, done):
+        """
+        Recibe la transición actual del entorno y la almacena.
+        Si el episodio ha terminado, dispara el proceso de aprendizaje.
+        :param state: El estado actual del entorno.
+        :param action: La acción tomada en el estado actual.
+        :param reward: La recompensa recibida tras tomar la acción.
+        :param next_state: El siguiente estado del entorno tras tomar la acción.
+        :param done: Booleano que indica si el episodio ha terminado.
+        :return: None
+        """
         # 1. Guardamos la experiencia del paso actual
         self.episode_memory.append((state, action, reward))
 
-        # 2. Monte Carlo SOLO aprende al final del episodio
+        # 2. Monte Carlo SOLO aprende al final del episodio (todas las visitas AKA every-visit)
         if done:
             self._learn_from_episode()
             self.episode_memory = []  # Vaciamos la memoria para el siguiente episodio
 
     def _learn_from_episode(self):
         """
-        Recorres self.episode_memory hacia atrás (G = R + gamma * G).
+        Aprende de la experiencia acumulada en el episodio calculando el retorno hacia atrás y aplicando Weighted Importance Sampling.
+        Se realiza recorriendo self.episode_memory hacia atrás (G = R + gamma * G).
 
         Si self.behavior_policy != self.target_policy:
-            Calculas la variable rho (Importance Sampling) usando el método get_probability()
+            Calculas la variable rho (Importance Sampling) usando el métod get_probability()
             de ambas políticas.
 
         :return:
         """
-        G = 0.0  # Retorno acumulado
-        W = 1.0  # Peso del Importance Sampling (rho)
+        G = 0.0  # Retorno acumulado (Suma de recompensas descontadas)
+        W = 1.0  # Peso del Importance Sampling (rho). Comienza en 1.0 al final del episodio.
         # Recorremos la experiencia del episodio de atrás hacia adelante (reversed)
         for state, action, reward in reversed(self.episode_memory):
 
@@ -83,11 +106,13 @@ class AgentMonteCarlo(Agent):
             # 2. Actualizamos la suma acumulada de los pesos (C-Table)
             self.c_table[state][action] += W
 
-            # 3. Actualizamos el valor Q (Media móvil ponderada)
+            # 3. Actualizamos el valor Q (Media móvil ponderada  por el peso W)
             # Formula: Q(s,a) = Q(s,a) + (W / C(s,a)) * [G - Q(s,a)]
+            # El factor (W / C) actúa como la tasa de aprendizaje (alpha)
             self.q_table[state][action] += (W / self.c_table[state][action]) * (G - self.q_table[state][action])
 
             # 4. Calculamos las probabilidades de haber tomado esa acción bajo ambas políticas
+
             pi_prob = self.target_policy.get_probability(state, action, self.q_table)
             b_prob = self.behavior_policy.get_probability(state, action, self.q_table)
 
@@ -95,70 +120,7 @@ class AgentMonteCarlo(Agent):
             W = W * (pi_prob / b_prob)
 
             # 6. Optimización vital para Off-policy:
-            # Si W se vuelve 0, significa que la política objetivo NUNCA habría tomado
-            # esa acción. No tiene sentido seguir hacia atrás porque el peso de todo lo
-            # anterior será 0. Rompemos el bucle para ahorrar cómputo.
+            # Si W se vuelve 0, significa que la política objetivo NUNCA habría tomado esa acción. No tiene sentido
+            # seguir hacia atrás porque el peso de toda la experiencia anterior será 0. Rompemos el bucle para ahorrar cómputo.
             if W == 0.0:
                 break
-#   
-    # def _epsilon_schedule(self, t):
-    #     # Misma idea que en tu código: epsilon grande al inicio, va bajando
-    #     # Ojo: si quieres, puedes cambiar la fórmula, pero que sea determinista.
-    #     return min(1.0, 1000.0 / (t + 1))
-# 
-    # def get_action(self, state, t=0):
-    #     if self.decay:
-    #         self.epsilon = self._epsilon_schedule(t)
-    #     else:
-    #         self.epsilon = self.epsilon_init
-# 
-    #     pi_A = random_epsilon_greedy_policy(self.Q, self.epsilon, state, self.nA)
-    #     action = np.random.choice(np.arange(self.nA), p=pi_A)
-    #     return action
-# 
-    # def update(self, obs, action, next_obs, reward, terminated, truncated, info):
-    #     # Guardamos transición del episodio
-    #     self.episode.append((obs, action, reward))
-# 
-    #     done = terminated or truncated
-    #     if not done:
-    #         return
-# 
-    #     # Al terminar: Monte Carlo hacia atrás
-    #     G = 0.0
-    #     for (s, a, r) in reversed(self.episode):
-    #         G = r + self.gamma * G
-    #         self.n_visits[s, a] += 1.0
-    #         alpha = 1.0 / self.n_visits[s, a]
-    #         self.Q[s, a] += alpha * (G - self.Q[s, a])
-# 
-    #     # Estadísticas del episodio
-    #     ep_return = sum([tr[2] * (self.gamma ** i) for i, tr in enumerate(self.episode)])
-    #     self.episode_returns.append(ep_return)
-    #     self.episode_lengths.append(len(self.episode))
-# 
-    #     # Reset del buffer
-    #     self.episode = []
-# 
-    # def stats(self):
-    #     # Devuelve series para graficar
-    #     returns = np.array(self.episode_returns, dtype=float)
-    #     lengths = np.array(self.episode_lengths, dtype=float)
-# 
-    #     if len(returns) == 0:
-    #         return {
-    #             "returns": [],
-    #             "returns_mean": [],
-    #             "lengths": [],
-    #             "lengths_mean": []
-    #         }
-# 
-    #     returns_mean = np.cumsum(returns) / (np.arange(len(returns)) + 1)
-    #     lengths_mean = np.cumsum(lengths) / (np.arange(len(lengths)) + 1)
-# 
-    #     return {
-    #         "returns": returns.tolist(),
-    #         "returns_mean": returns_mean.tolist(),
-    #         "lengths": lengths.tolist(),
-    #         "lengths_mean": lengths_mean.tolist()
-    #     }
