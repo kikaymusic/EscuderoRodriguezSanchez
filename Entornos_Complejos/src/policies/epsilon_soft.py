@@ -1,6 +1,6 @@
 import numpy as np
 
-from Entornos_Complejos.src.policies.policy import Policy
+from src.policies.policy import Policy
 
 class EpsilonSoftPolicy(Policy):
     """
