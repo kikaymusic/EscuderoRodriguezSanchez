@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.policies.policy import Policy
+from policy import Policy
 
 class EpsilonGreedyPolicy(Policy):
     """
