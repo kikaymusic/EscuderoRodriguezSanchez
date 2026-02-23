@@ -9,7 +9,7 @@ def train_agent(env, agent):
     episode_lengths = []
 
     for ep in range(N_EPISODES):
-        state, info = env.reset(seed=SEMILLA)
+        state, info = env.reset(seed=SEMILLA + ep)
 
         done = False
         total_reward = 0.0
