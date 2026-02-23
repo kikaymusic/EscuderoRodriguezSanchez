@@ -22,8 +22,6 @@ class AgentQLearning(Agent):
         self.target_policy = target_policy
         self.alpha = alpha
         self.gamma = gamma
-        # Inicializamos Q-Table
-        self.q_table = {}
 
     def get_action(self, state):
         """
