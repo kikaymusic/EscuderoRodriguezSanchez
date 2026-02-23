@@ -24,7 +24,6 @@ class AgentMonteCarlo(Agent):
                         Crucial para el Weighted Importance Sampling.
         episode_memory (list): Buffer que guarda la trayectoria del episodio actual como tuplas (S_t, A_t, R_{t+1}).
     """
-    #def __init__(self, env: Env, epsilon=0.4, decay=False, discount_factor=1.0, seed=100):
     def __init__(self, env: Env, target_policy: Policy, behavior_policy: Policy, gamma: float = 0.99):
         """
         Constructor del agente Monte Carlo Off-policy con Weighted Importance Sampling.
