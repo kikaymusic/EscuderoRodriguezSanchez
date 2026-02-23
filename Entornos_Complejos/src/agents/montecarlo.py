@@ -48,14 +48,22 @@ class AgentMonteCarlo(Agent):
         self.episode_memory = []
 
 
+    
     def get_action(self, state):
         """
         Selecciona una acción basándose en la política de comportamiento (behavior_policy).
         :param state: El estado actual del entorno.
         :return: int: El índice de la acción a tomar.
         """
-        # Siempre nos movemos en el entorno usando la behavior_policy
+        
+        # Ensure state exists in q_table before policy tries to access it
+        if state not in self.q_table:
+            n_actions = self.env.action_space.n
+            self.q_table[state] = np.zeros(n_actions)
+            self.c_table[state] = np.zeros(n_actions)
+        
         return self.behavior_policy.get_action(state, self.q_table)
+
 
     def update(self, state, action, reward, next_state, done):
         """
@@ -75,6 +83,7 @@ class AgentMonteCarlo(Agent):
         if done:
             self._learn_from_episode()
             self.episode_memory = []  # Vaciamos la memoria para el siguiente episodio
+        
 
     def _learn_from_episode(self):
         """
