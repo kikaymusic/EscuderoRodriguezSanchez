@@ -1,7 +1,7 @@
 import numpy as np
 from gymnasium.core import Env
 from .agent import Agent
-from Entornos_Complejos.src.policies import Policy
+from ..policies import Policy
 
 class AgentSarsa(Agent):
     """
