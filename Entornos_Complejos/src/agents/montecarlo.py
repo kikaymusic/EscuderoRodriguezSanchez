@@ -99,9 +99,7 @@ class AgentMonteCarlo(Agent):
         # Recorremos la experiencia del episodio de atrás hacia adelante (reversed)
         for state, action, reward in reversed(self.episode_memory):
 
-            # 1. Calculamos el retorno descontado G
-            G = self.gamma * G + reward
-
+            # TODO revisar, no tiene sentido aprender de un episodio y que su estado no exista
             # --- Inicialización perezosa (Lazy initialization) ---
             # Si es la primera vez que visitamos este estado, lo creamos en las tablas
             if state not in self.q_table:
@@ -109,6 +107,8 @@ class AgentMonteCarlo(Agent):
                 self.q_table[state] = np.zeros(n_actions)
                 self.c_table[state] = np.zeros(n_actions)
 
+            # 1. Calculamos el retorno descontado G
+            G = self.gamma * G + reward
             # 2. Actualizamos la suma acumulada de los pesos (C-Table)
             self.c_table[state][action] += W
 
