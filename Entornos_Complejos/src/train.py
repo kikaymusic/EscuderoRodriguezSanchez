@@ -1,4 +1,4 @@
-from src.utils import SEMILLA
+from .utils import SEMILLA
 import numpy as np
 
 N_EPISODES = 80_000
