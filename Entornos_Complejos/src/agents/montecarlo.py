@@ -39,9 +39,7 @@ class AgentMonteCarlo(Agent):
         self.behavior_policy = behavior_policy if behavior_policy else target_policy
         self.gamma = gamma
 
-        # Inicializamos Q-Table y C-Table (esta última es para Importance Sampling en off-policy)
-        # espacios discretos
-        self.q_table = {}
+        # Inicializamos C-Table (para Importance Sampling en off-policy)
         self.c_table = {}
 
         # Buffer del episodio actual

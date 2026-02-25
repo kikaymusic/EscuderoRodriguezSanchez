@@ -5,10 +5,11 @@ class Agent(ABC):
 
     def __init__(self, env: gym.Env):
         """
-        Inicializamos tod lo necesario para el aprendizaje
+        Inicializamos todo lo necesario para el aprendizaje
         """
         self.env = env
-        self.training_rewards = []
+        # Inicializamos Q-Table
+        self.q_table = {}
 
     @abstractmethod
     def get_action(self, state):

@@ -19,8 +19,6 @@ class AgentSarsa(Agent):
         self.policy = policy
         self.alpha = alpha
         self.gamma = gamma
-        # Inicializamos Q-Table
-        self.q_table = {}
 
     def get_action(self, state):
         """
