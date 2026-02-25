@@ -7,7 +7,7 @@ from .montecarlo import AgentMonteCarlo
 __all__ = [
     'Agent',
     'AgentSarsa',
-    #'AgentSarsaSemiGradient',
+    'AgentSarsaSemiGradient',
     'AgentQLearning',
     'AgentMonteCarlo'
 ]
