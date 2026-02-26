@@ -63,7 +63,7 @@ def plot_policy(policy):
     plt.show()
     plt.close()
 
-def plot_q_heatmap(Q, state_filter_fn):
+def plot_q_heatmap(Q, state_filter_fn, label):
     """Plot Q[state][action] for filtered states."""
     import seaborn as sns
     states = [s for s in Q.keys() if state_filter_fn(s)]
@@ -73,7 +73,7 @@ def plot_q_heatmap(Q, state_filter_fn):
     fig, ax = plt.subplots(figsize=(12, 6))
     sns.histplot(hit_vals, color="red", label="HIT", kde=True, stat="density", ax=ax)
     sns.histplot(stick_vals, color="blue", label="STICK", kde=True, stat="density", ax=ax)
-    ax.set_title("Q-Value Distribution for Filtered States")
+    ax.set_title(f"Q-Value Distribution for Filtered States {label}")
     ax.set_xlabel("Q(s,a)")
     ax.legend()
     plt.show()
