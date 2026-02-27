@@ -5,27 +5,10 @@ Tests para el agente SARSA Semi-Gradiente.
 import numpy as np
 import gymnasium as gym
 from Entornos_Complejos.src.agents import AgentSarsaSemiGradient
+from Entornos_Complejos.src.features_extractors.simple import simple_feature_extractor
 from Entornos_Complejos.src.policies import EpsilonGreedyPolicy
 
 
-def simple_feature_extractor(state, action, env):
-    """
-    Extractor de características simple para testing.
-    """
-    state = np.array(state)
-    n_actions = env.action_space.n
-    n_dims = len(state)
-
-    # Características: [1, s1, s2, ..., sn] para cada acción
-    base_features = np.concatenate([[1.0], state])
-    n_base_features = len(base_features)
-
-    features = np.zeros(n_base_features * n_actions)
-    start_idx = action * n_base_features
-    end_idx = start_idx + n_base_features
-    features[start_idx:end_idx] = base_features
-
-    return features
 
 
 def test_agent_initialization():
