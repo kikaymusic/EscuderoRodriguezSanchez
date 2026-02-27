@@ -1,8 +1,8 @@
 from .utils import SEMILLA
 import numpy as np
 
-N_EPISODES = 80_000
-MAX_STEPS = 1_000
+N_EPISODES = 80000
+MAX_STEPS = 10
 
 def train_agent(env, agent):
     episode_returns = []
