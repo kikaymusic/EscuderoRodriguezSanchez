@@ -1,7 +1,7 @@
 import numpy as np
 from gymnasium.core import Env
 from .agent import Agent
-from src.policies.policy import Policy
+from ..policies.policy import Policy
 
 class AgentQLearning(Agent):
     """
