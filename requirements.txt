@@ -3,6 +3,6 @@ arms~=2.1.0
 plotting~=0.0.7
 seaborn~=0.13.2
 matplotlib~=3.10.8
-algorithms~=0.1.4
 swig~=4.4.1
 gym[box2d]~=2.3.10
+scikit-learn~=1.8.0

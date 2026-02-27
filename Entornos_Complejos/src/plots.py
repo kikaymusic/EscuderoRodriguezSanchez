@@ -225,3 +225,37 @@ def compare_plots(plot_fn, agents_data, agent_names=None, **kwargs):
 
     plt.tight_layout()
     plt.show()
+
+
+def plot_cost_to_go(pos_space, vel_space, V_grid, episode_num="Final"):
+    """
+    Dibuja la superficie 3D del Cost-to-Go para MountainCar.
+    Basado en las representaciones clásicas de Sutton & Barto.
+    """
+    # El cost-to-go es el valor negativo de V(s)
+    cost_to_go = -V_grid
+
+    fig = plt.figure(figsize=(10, 7))
+    ax = fig.add_subplot(111, projection='3d')
+
+    # Crear la malla (meshgrid) para Matplotlib
+    P, V = np.meshgrid(pos_space, vel_space)
+
+    # Dibujar la superficie 3D.
+    # Usamos cost_to_go.T (transpuesta) para alinear correctamente los ejes X e Y con la matriz
+    surf = ax.plot_surface(P, V, cost_to_go.T, cmap='viridis',
+                           edgecolor='none', alpha=0.9)
+
+    ax.set_xlabel('Posición', fontsize=12)
+    ax.set_ylabel('Velocidad', fontsize=12)
+    ax.set_zlabel('Cost-to-Go (Pasos estimados)', fontsize=12)
+    ax.set_title(f'Superficie de Cost-to-Go - Episodio {episode_num}', fontsize=14)
+
+    # Añadir barra de color
+    fig.colorbar(surf, shrink=0.5, aspect=5, pad=0.1, label='Pasos')
+
+    # Ajustar el ángulo de visión para que se parezca al del libro
+    ax.view_init(elev=30, azim=-45)
+
+    plt.tight_layout()
+    plt.show()

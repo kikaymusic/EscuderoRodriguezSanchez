@@ -57,7 +57,7 @@ class AgentSarsaSemiGradient(Agent):
 
         # Cache para almacenar los valores Q aproximados de cada acción
         # Esto es útil para la política y para evitar recalcular
-        self._q_cache = {}
+        #self._q_cache = {}
 
     def _get_features(self, state, action):
         """
