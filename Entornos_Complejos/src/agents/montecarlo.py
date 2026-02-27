@@ -24,7 +24,8 @@ class AgentMonteCarlo(Agent):
                         Crucial para el Weighted Importance Sampling.
         episode_memory (list): Buffer que guarda la trayectoria del episodio actual como tuplas (S_t, A_t, R_{t+1}).
     """
-    def __init__(self, env: Env, target_policy: Policy, behavior_policy: Policy, gamma: float = 0.99):
+
+    def __init__(self, env: Env, target_policy: Policy, behavior_policy: Policy | None, gamma: float = 0.99):
         """
         Constructor del agente Monte Carlo Off-policy con Weighted Importance Sampling.
         :param env: Entorno de Gymnasium.
@@ -45,23 +46,20 @@ class AgentMonteCarlo(Agent):
         # Buffer del episodio actual
         self.episode_memory = []
 
-
-    
     def get_action(self, state):
         """
         Selecciona una acción basándose en la política de comportamiento (behavior_policy).
         :param state: El estado actual del entorno.
         :return: int: El índice de la acción a tomar.
         """
-        
+
         # Ensure state exists in q_table before policy tries to access it
         if state not in self.q_table:
             n_actions = self.env.action_space.n
             self.q_table[state] = np.zeros(n_actions)
             self.c_table[state] = np.zeros(n_actions)
-        
-        return self.behavior_policy.get_action(state, self.q_table)
 
+        return self.behavior_policy.get_action(state, self.q_table)
 
     def update(self, state, action, reward, next_state, done):
         """
@@ -81,7 +79,6 @@ class AgentMonteCarlo(Agent):
         if done:
             self._learn_from_episode()
             self.episode_memory = []  # Vaciamos la memoria para el siguiente episodio
-        
 
     def _learn_from_episode(self):
         """
@@ -112,7 +109,7 @@ class AgentMonteCarlo(Agent):
             # 2. Actualizamos la suma acumulada de los pesos (C-Table)
             self.c_table[state][action] += W
 
-            # 3. Actualizamos el valor Q (Media móvil ponderada  por el peso W)
+            # 3. Actualizamos el valor Q (Media móvil ponderada por el peso W)
             # Formula: Q(s,a) = Q(s,a) + (W / C(s,a)) * [G - Q(s,a)]
             # El factor (W / C) actúa como la tasa de aprendizaje (alpha)
             self.q_table[state][action] += (W / self.c_table[state][action]) * (G - self.q_table[state][action])
