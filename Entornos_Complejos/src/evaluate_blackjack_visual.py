@@ -6,7 +6,7 @@ from IPython.display import display, clear_output
 
 ACTION_NAMES = {0: "STICK", 1: "HIT"}  # Blackjack-v1 usual mapping
 
-def evaluate_agent_visual(env, agent, n_episodes=20, seed_base=1234, delay=0.6, greedy_eval=True):
+def evaluate_blackjack_visual(env, agent, n_episodes=20, seed_base=1234, delay=0.6, greedy_eval=True):
     """
     Visual evaluation of an agent in Blackjack.
     Shows episodes one by one with a running scoreboard.
