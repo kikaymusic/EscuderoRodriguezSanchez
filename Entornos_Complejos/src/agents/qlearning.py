@@ -69,7 +69,7 @@ class AgentQLearning(Agent):
         td_target = reward + self.gamma * target_value - current_q
         # Actualizamos el valor de Q(S, A) siguiendo la formula:
         # Q(S, A) <- Q(S, A) + alpha * [R + gamma * Q(S', a) - Q(S, A)]
-        self.q_table[state][action] += self.alpha * (td_target - self.q_table[state][action])
+        self.q_table[state][action] += self.alpha * td_target
 
     def _ensure_state_exists(self, state):
         """
