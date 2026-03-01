@@ -25,7 +25,7 @@ class AgentDeepQLearning(Agent):
         batch_size (int): Tamaño del minibatch para el entrenamiento.
     """
 
-    def __init__(self, env: Env, behavior_policy: Policy, q_network: nn.Module, lr: float = 1e-3, buffer_size: int = 10000, batch_size: int = 64, gamma: float = 0.99):
+    def __init__(self, env: Env, behavior_policy: Policy, q_network: nn.Module, lr: float = 1e-3, buffer_size: int = 10000, batch_size: int = 64, gamma: float = 0.99, device: str = None, update_frequency: int = 4):
         """
         :param env: Entorno de Gymnasium.
         :param behavior_policy: Política de comportamiento.
@@ -34,17 +34,25 @@ class AgentDeepQLearning(Agent):
         :param batch_size: Tamaño del minibatch para el entrenamiento.
         :param buffer_size: Capacidad N de la memoria de replay (D).
         :param gamma: Factor de descuento.
+        :param device: Dispositivo para ejecutar el modelo ('cuda', 'cpu', o None para auto-detectar).
+        :param update_frequency: Frecuencia de actualizaciones (entrenar cada N pasos).
         """
         super().__init__(env)
         # Inicializamos la tabla Q vacia, ya que no la utilizaremos
-        self.q_table = None 
+        self.q_table = None
         # Política de comportamiento
         self.behavior_policy = behavior_policy
         # Factor de descuento
         self.gamma = gamma
 
+        # Detectar dispositivo (GPU si está disponible, sino CPU)
+        if device is None:
+            self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        else:
+            self.device = torch.device(device)
+
         # Red neuronal para aproximar la función Q
-        self.model = q_network
+        self.model = q_network.to(self.device)
         # Optimizador y función de pérdida para entrenar la red
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
         self.criterion = nn.MSELoss()
@@ -54,23 +62,27 @@ class AgentDeepQLearning(Agent):
         # Inicializamos la memoria de replay D con el tamaño especificado N
         self.memory = deque(maxlen=buffer_size)
 
+        # Contador de pasos y frecuencia de actualización
+        self.update_frequency = update_frequency
+        self.step_count = 0
+
 
     def get_action(self, state):
         """
         Obtiene una acción siguiendo la política actual y la red neuronal.
         """
-        # Convertimos el estado a tensor para la red
-        state_tensor = torch.FloatTensor(state).unsqueeze(0)
-        
+        # Convertimos el estado a tensor para la red y movemos al dispositivo correcto
+        state_tensor = torch.FloatTensor(state).unsqueeze(0).to(self.device)
+
         # Desactivamos el cálculo de gradientes
         with torch.no_grad():
             # Predecimos los valores de Q para todas las acciones
-            q_values = self.model(state_tensor).numpy()
-            # Creamos un diccionario falso para el formato esperado por la política
-            q_values_dict = {state: q_values}
-        
+            q_values = self.model(state_tensor).cpu().numpy().squeeze()
+            # Creamos un diccionario con una clave hashable (tupla) para el formato esperado por la política
+            q_values_dict = {tuple(state): q_values}
+
         # Obtenemos la acción según la política de comportamiento y los valores Q predichos
-        return self.behavior_policy.get_action(state, q_values_dict)
+        return self.behavior_policy.get_action(tuple(state), q_values_dict)
     
 
     def update(self, state, action, reward, next_state, done):
@@ -105,24 +117,26 @@ class AgentDeepQLearning(Agent):
         :param next_state: Siguiente estado (phi').
         :param done: Booleano que indica si el episodio ha terminado.
         """
-        # Guardamos la transición en la memoria de replay 
+        # Guardamos la transición en la memoria de replay
         self.memory.append((state, action, reward, next_state, done))
 
+        # Incrementar contador de pasos
+        self.step_count += 1
 
-        # Comprobamos si tenemos suficientes experiencias en la memoria para realizar un entrenamiento
-        if len(self.memory) < self.batch_size:
+        # Comprobamos si tenemos suficientes experiencias en la memoria y si toca entrenar
+        if len(self.memory) < self.batch_size or self.step_count % self.update_frequency != 0:
             return
 
         # Extraemos un minibatch de transiciones de D
         minibatch = random.sample(self.memory, self.batch_size)
         states, actions, rewards, next_states, dones = zip(*minibatch)
 
-        # Convertimos todo a tensores de PyTorch
-        states = torch.FloatTensor(np.array(states))
-        actions = torch.LongTensor(actions).unsqueeze(1)
-        rewards = torch.FloatTensor(rewards)
-        next_states = torch.FloatTensor(np.array(next_states))
-        dones = torch.FloatTensor(dones)
+        # Convertimos todo a tensores de PyTorch y movemos al dispositivo correcto
+        states = torch.FloatTensor(np.array(states)).to(self.device)
+        actions = torch.LongTensor(actions).unsqueeze(1).to(self.device)
+        rewards = torch.FloatTensor(rewards).to(self.device)
+        next_states = torch.FloatTensor(np.array(next_states)).to(self.device)
+        dones = torch.FloatTensor(dones).to(self.device)
 
 
         # Desactivamos el cálculo de gradientes
