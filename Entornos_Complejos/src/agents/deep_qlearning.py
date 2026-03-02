@@ -25,7 +25,16 @@ class AgentDeepQLearning(Agent):
         batch_size (int): Tamaño del minibatch para el entrenamiento.
     """
 
-    def __init__(self, env: Env, behavior_policy: Policy, q_network: nn.Module, lr: float = 1e-3, buffer_size: int = 10000, batch_size: int = 64, gamma: float = 0.99, device: str = None, update_frequency: int = 4):
+    def __init__(self,
+                 env: Env,
+                 behavior_policy: Policy,
+                 q_network: nn.Module,
+                 lr: float = 1e-3,
+                 buffer_size: int = 10000,
+                 batch_size: int = 64,
+                 gamma: float = 0.99,
+                 device: str = None,
+                 update_frequency: int = 1):
         """
         :param env: Entorno de Gymnasium.
         :param behavior_policy: Política de comportamiento.
@@ -87,7 +96,7 @@ class AgentDeepQLearning(Agent):
 
     def update(self, state, action, reward, next_state, done):
         """
-        Función de actualización de Deep Q-Learning.
+        Función de actualización de Deep Q-Learning con optimizaciones de rendimiento.
 
         Para cada transición, guardaremos la experiencia en la memoria de replay. La experiencia estará formada por:
         (phi, a, r, phi', done)
@@ -127,19 +136,32 @@ class AgentDeepQLearning(Agent):
         if len(self.memory) < self.batch_size or self.step_count % self.update_frequency != 0:
             return
 
-        # Extraemos un minibatch de transiciones de D
-        minibatch = random.sample(self.memory, self.batch_size)
-        states, actions, rewards, next_states, dones = zip(*minibatch)
+        # Extraemos un minibatch de transiciones de D usando índices aleatorios (más rápido)
+        indices = np.random.randint(0, len(self.memory), size=self.batch_size)
 
-        # Convertimos todo a tensores de PyTorch y movemos al dispositivo correcto
-        states = torch.FloatTensor(np.array(states)).to(self.device)
-        actions = torch.LongTensor(actions).unsqueeze(1).to(self.device)
-        rewards = torch.FloatTensor(rewards).to(self.device)
-        next_states = torch.FloatTensor(np.array(next_states)).to(self.device)
-        dones = torch.FloatTensor(dones).to(self.device)
+        # Preparar arrays numpy primero (más eficiente)
+        states_np = np.zeros((self.batch_size, len(state)), dtype=np.float32)
+        next_states_np = np.zeros((self.batch_size, len(state)), dtype=np.float32)
+        actions_np = np.zeros(self.batch_size, dtype=np.int64)
+        rewards_np = np.zeros(self.batch_size, dtype=np.float32)
+        dones_np = np.zeros(self.batch_size, dtype=np.float32)
 
+        for i, idx in enumerate(indices):
+            s, a, r, ns, d = self.memory[idx]
+            states_np[i] = s
+            actions_np[i] = a
+            rewards_np[i] = r
+            next_states_np[i] = ns
+            dones_np[i] = d
 
-        # Desactivamos el cálculo de gradientes
+        # Convertir a tensores de una vez (una sola transferencia CPU->GPU)
+        states = torch.from_numpy(states_np).to(self.device, non_blocking=True)
+        actions = torch.from_numpy(actions_np).unsqueeze(1).to(self.device, non_blocking=True)
+        rewards = torch.from_numpy(rewards_np).to(self.device, non_blocking=True)
+        next_states = torch.from_numpy(next_states_np).to(self.device, non_blocking=True)
+        dones = torch.from_numpy(dones_np).to(self.device, non_blocking=True)
+
+        # Desactivamos el cálculo de gradientes para el cálculo de targets
         with torch.no_grad():
             # Obtenemos el valor Q máximo para el siguiente estado phi_j' utilizando la red neuronal (max_a' Q(phi_next, a'; theta))
             max_next_q = self.model(next_states).max(1)[0]
@@ -150,10 +172,15 @@ class AgentDeepQLearning(Agent):
         current_q = self.model(states).gather(1, actions).squeeze()
         # Aplicamos la función de perdida entre las predicciones actuales (Q(phi_j, a_j; theta)) y los objetivos calculados (y_j)
         loss = self.criterion(current_q, targets)
-        
+
         # Reseteamos los gradientes del optimizador
         self.optimizer.zero_grad()
 
-        # Actualizamos los pesos de la red neuronal utilizando backpropagation
+        # Actualizamos los gradientes mediante backpropagation
         loss.backward()
+
+        # Aplicamos gradient clipping para estabilidad
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+
+        # Actualizamos los pesos
         self.optimizer.step()
