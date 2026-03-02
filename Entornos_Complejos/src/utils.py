@@ -43,10 +43,12 @@ def extract_v_and_policy_continuous(env, agent, resolution=50):
     Muestrea el espacio de estados en una cuadrícula (grid) regular.
 
     :param env: Entorno de Gymnasium (necesario para conocer los límites).
-    :param agent: Agente entrenado (debe tener sus pesos accesibles, p.e. agent.weights).
+    :param agent: Agente entrenado (puede ser SARSA semi-gradient o Deep Q-Learning).
     :param resolution: Número de puntos a muestrear por cada dimensión del estado.
     :return: pos_grid, vel_grid, V_grid, Policy_grid
     """
+    import torch
+
     # 1. Obtener los límites del entorno
     min_pos, min_vel = env.observation_space.low
     max_pos, max_vel = env.observation_space.high
@@ -61,21 +63,25 @@ def extract_v_and_policy_continuous(env, agent, resolution=50):
 
     n_actions = env.action_space.n
 
+    # Detectar si es un agente Deep Q-Learning o uno basado en features
+    is_deep_q = hasattr(agent, 'model') and hasattr(agent, 'device')
+
     # 4. Evaluar la aproximación de la función en cada punto
     for i, p in enumerate(pos_space):
         for j, v in enumerate(vel_space):
             state = np.array([p, v])
 
-            q_values = np.zeros(n_actions)
-            for a in range(n_actions):
-                # Extraemos características para este estado y acción
-                # Nota: Ajusta la llamada a feature_extractor según tu implementación
-                # Si usaste la clase OptimizedPolynomialExtractor:
-                features = agent.feature_extractor(state, a)
-
-                # Calculamos el Q-valor aproximado: Q = w * x
-                # Asumiendo que tu agente tiene los pesos accesibles como agent.weights
-                q_values[a] = np.dot(agent.weights, features)
+            if is_deep_q:
+                # Para Deep Q-Learning, usar la red neuronal
+                state_tensor = torch.FloatTensor(state).unsqueeze(0).to(agent.device)
+                with torch.no_grad():
+                    q_values = agent.model(state_tensor).cpu().numpy().squeeze()
+            else:
+                # Para agentes basados en features (SARSA semi-gradient)
+                q_values = np.zeros(n_actions)
+                for a in range(n_actions):
+                    features = agent.feature_extractor(state, a)
+                    q_values[a] = np.dot(agent.weights, features)
 
             # V(s) es el valor máximo entre las acciones disponibles
             V_grid[i, j] = np.max(q_values)
