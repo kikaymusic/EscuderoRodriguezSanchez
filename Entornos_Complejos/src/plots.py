@@ -79,7 +79,7 @@ def plot_q_heatmap(Q, state_filter_fn, label):
     plt.show()
     plt.close()
 
-def plot_rewards(reward_list, length_list, window=1000):
+def plot_rewards(reward_list, length_list, window=4000):
     """Plot reward and episode lengths (moving average)."""
     rewards = np.array(reward_list)
     lengths = np.array(length_list)
@@ -224,4 +224,32 @@ def compare_plots(plot_fn, agents_data, agent_names=None, **kwargs):
             ax.set_ylabel(data['ylabel'])
 
     plt.tight_layout()
+    plt.show()
+
+
+def compare_rewards(agents_data, agent_names, window=4000):
+    plt.figure(figsize=(10, 5))
+    for (rewards, _), name in zip(agents_data, agent_names):
+        means = np.convolve(rewards, np.ones(window) / window, mode='valid')
+        plt.plot(means, label=name)
+
+    plt.title(f"Episode Rewards (Moving Average, Window = {window})")
+    plt.xlabel("Episode")
+    plt.ylabel("Average Reward")
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+
+
+def compare_lengths(agents_data, agent_names, window=4000):
+    plt.figure(figsize=(10, 5))
+    for (_, lengths), name in zip(agents_data, agent_names):
+        means = np.convolve(lengths, np.ones(window) / window, mode='valid')
+        plt.plot(means, label=name)
+
+    plt.title(f"Episode Lengths (Moving Average, Window = {window})")
+    plt.xlabel("Episode")
+    plt.ylabel("Average Length")
+    plt.grid(True)
+    plt.legend()
     plt.show()
