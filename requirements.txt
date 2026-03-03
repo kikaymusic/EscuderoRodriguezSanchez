@@ -3,6 +3,9 @@ arms~=2.1.0
 plotting~=0.0.7
 seaborn~=0.13.2
 matplotlib~=3.10.8
-algorithms~=0.1.4
 swig~=4.4.1
-gym[box2d]~=2.3.10
+gymnasium[box2d]~=1.2.3
+scikit-learn~=1.8.0
+# pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu126
+ipywidgets~=8.1.8
+pandas~=3.0.1
