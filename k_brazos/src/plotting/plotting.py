@@ -151,3 +151,186 @@ def plot_regret(steps: int, regret_accumulated: np.ndarray, algorithms: List[Alg
     plt.tight_layout()
     plt.show()
 
+#def plot_best_comparison(df_eps, df_softmax, df_ucb, distribution: str):
+#    """
+#    Genera un plot comparando el mejor parámetro de cada familia de algoritmos
+#    (EpsilonGreedy, Softmax, UCB1) para una distribución dada, mostrando el
+#    % de Selección Óptima a lo largo del tiempo.
+#
+#    :param df_eps:        DataFrame con los resultados de Epsilon-Greedy.
+#    :param df_softmax:    DataFrame con los resultados de Softmax.
+#    :param df_ucb:        DataFrame con los resultados de UCB1.
+#    :param distribution:  Nombre de la distribución: 'Normal', 'Bernoulli' o 'Binomial'.
+#    """
+#    import numpy as np
+#    import pandas as pd
+#    import matplotlib.pyplot as plt
+#    import seaborn as sns
+#
+#    sns.set_theme(style="whitegrid", palette="muted", font_scale=1.2)
+#
+#    dist = distribution.capitalize()
+#
+#    # ── Columnas de % selección óptima ──────────────────────────────────────
+#    eps_cols   = {0:    f"{dist}_Opt_Eps_0",
+#                  0.01: f"{dist}_Opt_Eps_0.01",
+#                  0.1:  f"{dist}_Opt_Eps_0.1"}
+#
+#    tau_cols   = {0.1: f"{dist}_Opt_Tau_0.1",
+#                  1:   f"{dist}_Opt_Tau_1",
+#                  5:   f"{dist}_Opt_Tau_5"}
+#
+#    k_cols     = {0.1: f"{dist}_Opt_k_0.1",
+#                  1:   f"{dist}_Opt_k_1",
+#                  5:   f"{dist}_Opt_k_5"}
+#
+#    def _best_param(df, col_map):
+#        """Devuelve (mejor_param, serie) según la media del último 20% de pasos."""
+#        tail = max(1, len(df) // 5)
+#        best_param = max(col_map, key=lambda p: df[col_map[p]].iloc[-tail:].mean())
+#        return best_param, df[col_map[best_param]].values
+#
+#    best_eps,  series_eps  = _best_param(df_eps,     eps_cols)
+#    best_tau,  series_tau  = _best_param(df_softmax, tau_cols)
+#    best_k,    series_k    = _best_param(df_ucb,     k_cols)
+#
+#    steps = len(series_eps)
+#
+#    # ── Rango dinámico del eje Y ─────────────────────────────────────────────
+#    # Calcula el máximo real de todas las series y añade un 5 % de margen
+#    # para que las líneas cercanas al 100 % no queden pegadas al borde.
+#    all_values = np.concatenate([series_eps, series_tau, series_k]) * 100
+#    y_max = min(all_values.max() * 1.05, 110)   # nunca supera 110 %
+#    y_min = max(all_values.min() * 0.95, 0)      # nunca baja de 0 %
+#
+#    # ── Plot ─────────────────────────────────────────────────────────────────
+#    fig, ax = plt.subplots(figsize=(14, 6))
+#
+#    ax.plot(range(steps), series_eps * 100,
+#            label=f"EpsilonGreedy  (ε={best_eps})", linewidth=2)
+#    ax.plot(range(steps), series_tau * 100,
+#            label=f"Softmax        (τ={best_tau})", linewidth=2)
+#    ax.plot(range(steps), series_k * 100,
+#            label=f"UCB1           (c={best_k})",   linewidth=2)
+#
+#    ax.set_title(f"Mejor Algoritmo por Familia — Distribución {dist}", fontsize=16)
+#    ax.set_xlabel("Pasos de Tiempo", fontsize=13)
+#    ax.set_ylabel("% Selección Óptima", fontsize=13)
+#    ax.set_ylim([y_min, y_max])
+#    ax.legend(title="Algoritmo (mejor parámetro)", fontsize=11)
+#    plt.tight_layout()
+#    plt.show()
+#
+#    # ── Resumen en consola ────────────────────────────────────────────────────
+#    print(f"[{dist}]  Mejor EpsilonGreedy → ε={best_eps}  |  "
+#          f"Mejor Softmax → τ={best_tau}  |  Mejor UCB1 → c={best_k}")
+
+def plot_best_comparison(df_eps, df_softmax, df_ucb, distribution: str):
+    """
+    Genera un plot comparando el mejor parámetro de cada familia de algoritmos
+    (EpsilonGreedy, Softmax, UCB1) para una distribución dada, mostrando el
+    % de Selección Óptima a lo largo del tiempo.
+
+    :param df_eps:        DataFrame con los resultados de Epsilon-Greedy.
+    :param df_softmax:    DataFrame con los resultados de Softmax.
+    :param df_ucb:        DataFrame con los resultados de UCB1.
+    :param distribution:  Nombre de la distribución: 'Normal', 'Bernoulli' o 'Binomial'.
+    """
+    import numpy as np
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    sns.set_theme(style="whitegrid", palette="muted", font_scale=1.2)
+
+    dist = distribution.capitalize()
+
+    # ── Columnas de % selección óptima ──────────────────────────────────────
+    eps_opt_cols = {0:    f"{dist}_Opt_Eps_0",
+                    0.01: f"{dist}_Opt_Eps_0.01",
+                    0.1:  f"{dist}_Opt_Eps_0.1"}
+
+    tau_opt_cols = {0.1: f"{dist}_Opt_Tau_0.1",
+                    1:   f"{dist}_Opt_Tau_1",
+                    5:   f"{dist}_Opt_Tau_5"}
+
+    k_opt_cols   = {0.1: f"{dist}_Opt_k_0.1",
+                    1:   f"{dist}_Opt_k_1",
+                    5:   f"{dist}_Opt_k_5"}
+
+    # ── Columnas de recompensa promedio ──────────────────────────────────────
+    eps_rew_cols = {0:    f"{dist}_Reward_Eps_0",
+                    0.01: f"{dist}_Reward_Eps_0.01",
+                    0.1:  f"{dist}_Reward_Eps_0.1"}
+
+    tau_rew_cols = {0.1: f"{dist}_Reward_Tau_0.1",
+                    1:   f"{dist}_Reward_Tau_1",
+                    5:   f"{dist}_Reward_Tau_5"}
+
+    k_rew_cols   = {0.1: f"{dist}_Reward_k_0.1",
+                    1:   f"{dist}_Reward_k_1",
+                    5:   f"{dist}_Reward_k_5"}
+
+    def _best_param(df, opt_col_map, rew_col_map):
+        """
+        Devuelve (mejor_param, serie_opt, serie_reward) eligiendo el parámetro
+        con mayor media de % selección óptima en el último 20 % de pasos.
+        """
+        tail = max(1, len(df) // 5)
+        best_param = max(opt_col_map, key=lambda p: df[opt_col_map[p]].iloc[-tail:].mean())
+        return (best_param,
+                df[opt_col_map[best_param]].values,
+                df[rew_col_map[best_param]].values)
+
+    best_eps, opt_eps, rew_eps = _best_param(df_eps,     eps_opt_cols, eps_rew_cols)
+    best_tau, opt_tau, rew_tau = _best_param(df_softmax, tau_opt_cols, tau_rew_cols)
+    best_k,   opt_k,   rew_k   = _best_param(df_ucb,     k_opt_cols,   k_rew_cols)
+
+    steps = len(opt_eps)
+
+    labels = [f"EpsilonGreedy  (ε={best_eps})",
+              f"Softmax        (τ={best_tau})",
+              f"UCB1           (c={best_k})"]
+
+    # ── Rangos dinámicos ─────────────────────────────────────────────────────
+    all_opt = np.concatenate([opt_eps, opt_tau, opt_k]) * 100
+    opt_ymax = min(all_opt.max() * 1.05, 110)
+    opt_ymin = max(all_opt.min() * 0.95, 0)
+
+    all_rew = np.concatenate([rew_eps, rew_tau, rew_k])
+    rew_ymax = all_rew.max() * 1.05
+    rew_ymin = all_rew.min() * 0.95
+
+    # ── Figura con dos subplots ───────────────────────────────────────────────
+    fig, (ax_opt, ax_rew) = plt.subplots(1, 2, figsize=(18, 6))
+    fig.suptitle(f"Mejor Algoritmo por Familia — Distribución {dist}",
+                 fontsize=16, y=1.02)
+
+    colors = sns.color_palette("muted", 3)
+
+    for series, label, color in zip(
+            [opt_eps * 100, opt_tau * 100, opt_k * 100], labels, colors):
+        ax_opt.plot(range(steps), series, label=label, linewidth=2, color=color)
+
+    ax_opt.set_title("% Selección Óptima", fontsize=14)
+    ax_opt.set_xlabel("Pasos de Tiempo", fontsize=12)
+    ax_opt.set_ylabel("% Selección Óptima", fontsize=12)
+    ax_opt.set_ylim([opt_ymin, opt_ymax])
+    ax_opt.legend(title="Algoritmo (mejor parámetro)", fontsize=10)
+
+    for series, label, color in zip(
+            [rew_eps, rew_tau, rew_k], labels, colors):
+        ax_rew.plot(range(steps), series, label=label, linewidth=2, color=color)
+
+    ax_rew.set_title("Recompensa Promedio", fontsize=14)
+    ax_rew.set_xlabel("Pasos de Tiempo", fontsize=12)
+    ax_rew.set_ylabel("Recompensa Promedio", fontsize=12)
+    ax_rew.set_ylim([rew_ymin, rew_ymax])
+    ax_rew.legend(title="Algoritmo (mejor parámetro)", fontsize=10)
+
+    plt.tight_layout()
+    plt.show()
+
+    # ── Resumen en consola ────────────────────────────────────────────────────
+    print(f"[{dist}]  Mejor EpsilonGreedy → ε={best_eps}  |  "
+          f"Mejor Softmax → τ={best_tau}  |  Mejor UCB1 → c={best_k}")
