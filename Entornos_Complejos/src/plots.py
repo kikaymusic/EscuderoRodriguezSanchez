@@ -6,6 +6,9 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import os
 from unittest.mock import patch
 from mpl_toolkits.mplot3d import Axes3D
+from typing import List, Dict
+from matplotlib.ticker import NullLocator
+plt.gca().yaxis.set_minor_locator(NullLocator())
 
 def plot_blackjack_values(V):
     def get_Z(x, y, usable_ace):
@@ -226,7 +229,56 @@ def compare_plots(plot_fn, agents_data, agent_names=None, **kwargs):
     plt.tight_layout()
     plt.show()
 
-def plot_cost_to_go(pos_space, vel_space, V_grid, episode_num="Final"):
+import matplotlib.pyplot as plt
+import numpy as np
+from typing import List
+
+def plot_steps_per_episode(all_lengths: List[np.ndarray], labels: List[str], title: str = "Pasos por Episodio", window: int = 1):
+    """
+    Genera una gráfica de Pasos por Episodio en escala logarítmica corregida.
+    
+    Args:
+        all_lengths: Lista de arrays con los pasos por episodio.
+        labels: Nombres de los algoritmos.
+        title: Título de la gráfica.
+        window: Tamaño de la ventana para media móvil (1 = sin suavizado).
+    """
+    plt.figure(figsize=(11, 6))
+    
+    for lengths, label in zip(all_lengths, labels):
+        data = np.array(lengths)
+        
+        # Aplicar media móvil si window > 1 para reducir el ruido visual
+        if window > 1:
+            data = np.convolve(data, np.ones(window)/window, mode='valid')
+        
+        plt.plot(data, label=label, linewidth=1.2, alpha=0.8)
+
+    # 1. Configurar escala logarítmica
+    plt.yscale('log')
+    
+    # 2. CORRECCIÓN CLAVE: Ajustar límites del eje Y para que la escala no se comprima.
+    # Mountain Car suele fallar a los 200 o 500 pasos; ajustamos el rango visual.
+    plt.ylim(80, 220) 
+    
+    # 3. Forzar los ticks para que coincidan con la imagen de referencia
+    y_ticks = [50, 100, 150, 200]
+    plt.yticks(y_ticks, [str(t) for t in y_ticks])
+    
+    # Estética y rejilla
+    plt.xlabel('Episodio', fontsize=12)
+    plt.ylabel('Pasos por episodio (escala log)', fontsize=12)
+    plt.title(title, fontsize=14)
+    
+    # Rejilla sutil solo en los ticks principales para limpieza visual
+    plt.grid(True, which="major", axis="y", ls="-", alpha=0.3)
+    plt.grid(True, which="major", axis="x", ls="-", alpha=0.1)
+    
+    plt.legend(loc='upper right')
+    plt.tight_layout()
+    plt.show()
+
+def plot_cost_to_go(pos_space, vel_space, V_grid, episode_num="Final", agent_name="Agent"):
     """
     Dibuja la superficie 3D del Cost-to-Go para MountainCar.
     Basado en las representaciones clásicas de Sutton & Barto.
@@ -247,8 +299,8 @@ def plot_cost_to_go(pos_space, vel_space, V_grid, episode_num="Final"):
 
     ax.set_xlabel('Posición', fontsize=12)
     ax.set_ylabel('Velocidad', fontsize=12)
-    ax.set_zlabel('Cost-to-Go (Pasos estimados)', fontsize=12)
-    ax.set_title(f'Superficie de Cost-to-Go - Episodio {episode_num}', fontsize=14)
+    ax.set_zlabel('Superficie de valores (Pasos estimados)', fontsize=12)
+    ax.set_title(f'[{agent_name}] Superficie de valores', fontsize=14)
 
     # Añadir barra de color
     fig.colorbar(surf, shrink=0.5, aspect=5, pad=0.1, label='Pasos')
@@ -259,6 +311,55 @@ def plot_cost_to_go(pos_space, vel_space, V_grid, episode_num="Final"):
     plt.tight_layout()
     plt.show()
 
+def plot_policy_comparison(agents, labels, env, resolution=100):
+    """
+    Compara las políticas de diferentes agentes para Mountain Car.
+    """
+    fig, axes = plt.subplots(1, len(agents), figsize=(14, 6), sharey=True)
+    if len(agents) == 1: axes = [axes]
+    
+    pos_range = np.linspace(env.observation_space.low[0], env.observation_space.high[0], resolution)
+    vel_range = np.linspace(env.observation_space.low[1], env.observation_space.high[1], resolution)
+    
+    for idx, agent in enumerate(agents):
+        z = np.zeros((resolution, resolution))
+        
+        for i, p in enumerate(pos_range):
+            for j, v in enumerate(vel_range):
+                state = np.array([p, v])
+                
+                # Adaptación para tu código específico:
+                # Usamos _get_all_q_values para obtener los valores Q aproximados
+                # y seleccionamos la acción con el valor más alto (greedy).
+                if hasattr(agent, '_get_all_q_values'):
+                    q_values = agent._get_all_q_values(state)
+                    z[j, i] = np.argmax(q_values)
+                else:
+                    # Caso genérico por si el agente de DQL usa otro método (ej: predict)
+                    # Aquí podrías añadir una condición para tu agente DQL
+                    try:
+                        z[j, i] = agent.get_best_action(state)
+                    except AttributeError:
+                        z[j, i] = agent.get_action(state) # Cuidado: esto podría incluir epsilon
+
+        # Colores: Rojo (Izquierda), Gris (Nada), Verde (Derecha)
+        axes[idx].contourf(pos_range, vel_range, z, levels=[-0.5, 0.5, 1.5, 2.5], 
+                                colors=['#e74c3c', '#bdc3c7', '#2ecc71'])
+        
+        axes[idx].set_title(f"[{labels[idx]}] Elecciones del agente", fontsize=14)
+        axes[idx].set_xlabel("Posición")
+        if idx == 0: axes[idx].set_ylabel("Velocidad")
+
+    # Leyenda
+    from matplotlib.lines import Line2D
+    custom_lines = [Line2D([0], [0], color='#e74c3c', lw=4),
+                    Line2D([0], [0], color='#bdc3c7', lw=4),
+                    Line2D([0], [0], color='#2ecc71', lw=4)]
+    fig.legend(custom_lines, ['Izquierda (0)', 'Nada (1)', 'Derecha (2)'], 
+               loc='lower center', ncol=3, bbox_to_anchor=(0.5, -0.05))
+
+    plt.tight_layout()
+    plt.show()
 
 def compare_rewards(agents_data, agent_names, window=4000):
     plt.figure(figsize=(10, 5))

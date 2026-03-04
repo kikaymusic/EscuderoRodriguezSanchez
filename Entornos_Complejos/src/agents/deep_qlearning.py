@@ -34,7 +34,8 @@ class AgentDeepQLearning(Agent):
                  batch_size: int = 64,
                  gamma: float = 0.99,
                  device: str = None,
-                 update_frequency: int = 1):
+                 update_frequency: int = 1,
+                 seed: int = None):
         """
         :param env: Entorno de Gymnasium.
         :param behavior_policy: Política de comportamiento.
@@ -74,6 +75,9 @@ class AgentDeepQLearning(Agent):
         # Contador de pasos y frecuencia de actualización
         self.update_frequency = update_frequency
         self.step_count = 0
+
+        # RNG para reproducibilidad
+        self.rng = np.random.default_rng(seed)
 
 
     def get_action(self, state):
@@ -137,7 +141,7 @@ class AgentDeepQLearning(Agent):
             return
 
         # Extraemos un minibatch de transiciones de D usando índices aleatorios (más rápido)
-        indices = np.random.randint(0, len(self.memory), size=self.batch_size)
+        indices = self.rng.integers(0, len(self.memory), size=self.batch_size)
 
         # Preparar arrays numpy primero (más eficiente)
         states_np = np.zeros((self.batch_size, len(state)), dtype=np.float32)
