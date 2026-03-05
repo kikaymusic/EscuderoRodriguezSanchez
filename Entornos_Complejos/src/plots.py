@@ -311,9 +311,9 @@ def plot_cost_to_go(pos_space, vel_space, V_grid, episode_num="Final", agent_nam
     plt.tight_layout()
     plt.show()
 
-def plot_policy_comparison(agents, labels, env, resolution=100):
+def plot_policy_comparison(agents, labels, env, resolution=100, show_trajectory=True):
     """
-    Compara las políticas de diferentes agentes para Mountain Car.
+    Compara las políticas y muestra una trayectoria de ejemplo.
     """
     fig, axes = plt.subplots(1, len(agents), figsize=(14, 6), sharey=True)
     if len(agents) == 1: axes = [axes]
@@ -322,41 +322,61 @@ def plot_policy_comparison(agents, labels, env, resolution=100):
     vel_range = np.linspace(env.observation_space.low[1], env.observation_space.high[1], resolution)
     
     for idx, agent in enumerate(agents):
+        # 1. Generar el fondo de la política (lo que ya tenías)
         z = np.zeros((resolution, resolution))
-        
         for i, p in enumerate(pos_range):
             for j, v in enumerate(vel_range):
                 state = np.array([p, v])
-                
-                # Adaptación para tu código específico:
-                # Usamos _get_all_q_values para obtener los valores Q aproximados
-                # y seleccionamos la acción con el valor más alto (greedy).
-                if hasattr(agent, '_get_all_q_values'):
-                    q_values = agent._get_all_q_values(state)
-                    z[j, i] = np.argmax(q_values)
-                else:
-                    # Caso genérico por si el agente de DQL usa otro método (ej: predict)
-                    # Aquí podrías añadir una condición para tu agente DQL
-                    try:
+                try:
+                    if hasattr(agent, '_get_all_q_values'):
+                        z[j, i] = np.argmax(agent._get_all_q_values(state))
+                    elif hasattr(agent, 'get_best_action'):
                         z[j, i] = agent.get_best_action(state)
-                    except AttributeError:
-                        z[j, i] = agent.get_action(state) # Cuidado: esto podría incluir epsilon
-
-        # Colores: Rojo (Izquierda), Gris (Nada), Verde (Derecha)
-        axes[idx].contourf(pos_range, vel_range, z, levels=[-0.5, 0.5, 1.5, 2.5], 
-                                colors=['#e74c3c', '#bdc3c7', '#2ecc71'])
+                    else:
+                        z[j, i] = agent.get_action(state)
+                except:
+                    z[j, i] = 1 # Fallback a "Nada"
         
-        axes[idx].set_title(f"[{labels[idx]}] Elecciones del agente", fontsize=14)
+        # Dibujar política
+        axes[idx].contourf(pos_range, vel_range, z, levels=[-0.5, 0.5, 1.5, 2.5], 
+                           colors=['#e74c3c', '#bdc3c7', '#2ecc71'], alpha=0.8)
+
+        # 2. NUEVO: Simular un episodio para obtener la trayectoria
+        if show_trajectory:
+            state, _ = env.reset()
+            trajectory = [state]
+            terminated = False
+            truncated = False
+            
+            while not (terminated or truncated):
+                # Usamos la acción greedy para la trayectoria
+                if hasattr(agent, 'get_best_action'):
+                    action = agent.get_best_action(state)
+                else:
+                    action = agent.get_action(state) # Asegúrate que epsilon=0 aquí
+                
+                state, _, terminated, truncated, _ = env.step(action)
+                trajectory.append(state)
+            
+            trajectory = np.array(trajectory)
+            # Dibujar la línea de la trayectoria
+            axes[idx].plot(trajectory[:, 0], trajectory[:, 1], color='black', lw=1.5, label='Trayectoria')
+            # Marcar el inicio
+            axes[idx].scatter(trajectory[0, 0], trajectory[0, 1], color='white', edgecolors='black', s=50, zorder=5)
+
+        axes[idx].set_title(f"[{labels[idx]}] Elecciones", fontsize=14)
         axes[idx].set_xlabel("Posición")
         if idx == 0: axes[idx].set_ylabel("Velocidad")
 
-    # Leyenda
+    # Leyenda (ajustada para incluir la trayectoria si quieres)
     from matplotlib.lines import Line2D
     custom_lines = [Line2D([0], [0], color='#e74c3c', lw=4),
                     Line2D([0], [0], color='#bdc3c7', lw=4),
-                    Line2D([0], [0], color='#2ecc71', lw=4)]
-    fig.legend(custom_lines, ['Izquierda (0)', 'Nada (1)', 'Derecha (2)'], 
-               loc='lower center', ncol=3, bbox_to_anchor=(0.5, -0.05))
+                    Line2D([0], [0], color='#2ecc71', lw=4),
+                    Line2D([0], [0], color='black', lw=1.5)] # Nueva línea para leyenda
+    
+    fig.legend(custom_lines, ['Izquierda (0)', 'Nada (1)', 'Derecha (2)', 'Camino Agente'], 
+               loc='lower center', ncol=4, bbox_to_anchor=(0.5, -0.05))
 
     plt.tight_layout()
     plt.show()
