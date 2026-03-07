@@ -17,6 +17,9 @@ def evaluate_mountaincar_visual(env, agent, n_episodes=5, seed_base=1234, delay=
     env = gym.make('MountainCar-v0', render_mode="rgb_array")
     """
 
+    # Diccionario auxiliar por si no está definido globalmente
+    actions_map = globals().get('ACTION_NAMES', {0: "Izquierda", 1: "Nada", 2: "Derecha"})
+
     # Marcadores adaptados a MountainCar
     successes = 0
     failures = 0
@@ -32,17 +35,28 @@ def evaluate_mountaincar_visual(env, agent, n_episodes=5, seed_base=1234, delay=
             extra_lines = []
 
         with out_plot:
+            # Limpiamos solo el contenido del widget de imagen
             clear_output(wait=True)
+            
+            # Capturamos el frame antes de crear la figura
             frame = env.render()
-            plt.figure(figsize=(7, 4.5))
+            
+            # Creamos la figura explícitamente para controlarla
+            fig = plt.figure(figsize=(7, 4.5))
+            
             if frame is not None:
                 plt.imshow(frame)
                 plt.axis("off")
             else:
-                plt.text(0.5, 0.5, "Error: Crea el env con render_mode='rgb_array'", ha="center", va="center")
+                plt.text(0.5, 0.5, "Error: Crea el env con render_mode='rgb_array'", 
+                         ha="center", va="center")
                 plt.axis("off")
+            
             plt.title(title)
             plt.show()
+            # CERRAMOS la figura inmediatamente para evitar que se duplique 
+            # o se acumule en la memoria del notebook
+            plt.close(fig)
 
         with out_info:
             clear_output(wait=True)
@@ -50,7 +64,7 @@ def evaluate_mountaincar_visual(env, agent, n_episodes=5, seed_base=1234, delay=
             print("MOUNTAIN CAR LIVE EVALUATION")
             print("=" * 70)
             print(f"Episodios objetivo : {n_episodes}")
-            print(f"Delay por frame    : {delay:.3f}s")
+            print(f"Delay por frame     : {delay:.3f}s")
             print("-" * 70)
             print(f"Éxitos (Llegó)     : {successes}")
             print(f"Fallos (Timeout)   : {failures}")
@@ -73,22 +87,19 @@ def evaluate_mountaincar_visual(env, agent, n_episodes=5, seed_base=1234, delay=
         done = False
         step_idx = 0
         ep_reward = 0.0
-        last_action = None
-
+        
         while not done:
             # Desempaquetar el estado continuo de MountainCar
             position, velocity = state
 
-            # Nota: Asumimos que la política del agente ya tiene epsilon=0 (Greedy)
-            # antes de llamar a esta función para una evaluación real.
+            # Obtenemos la acción del agente
             action = int(agent.get_action(state))
-            last_action = action
 
             extra_lines = [
                 f"Episodio            : {ep + 1}/{n_episodes}",
                 f"Paso                : {step_idx}",
                 f"Estado              : Pos={position:.4f}, Vel={velocity:.4f}",
-                f"Acción elegida      : {ACTION_NAMES.get(action, action)} ({action})",
+                f"Acción elegida      : {actions_map.get(action, action)} ({action})",
             ]
 
             render_frame(
@@ -96,7 +107,7 @@ def evaluate_mountaincar_visual(env, agent, n_episodes=5, seed_base=1234, delay=
                 extra_lines=extra_lines
             )
 
-            # Reducimos el delay porque MountainCar tiene hasta 200 pasos por episodio
+            # Pausa para poder ver la animación
             time.sleep(delay)
 
             next_state, reward, terminated, truncated, info = env.step(action)
@@ -107,9 +118,7 @@ def evaluate_mountaincar_visual(env, agent, n_episodes=5, seed_base=1234, delay=
             step_idx += 1
 
         # Resultado del episodio
-        # En MountainCar, si llega a 200 pasos, es truncado (fallo).
-        # Si termina antes, es porque llegó a la meta (éxito).
-        if step_idx < 200:
+        if step_idx < 200 and not truncated:
             successes += 1
             result_label = "¡ÉXITO! LLEGÓ A LA CIMA"
         else:
