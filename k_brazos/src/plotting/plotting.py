@@ -91,7 +91,7 @@ def plot_optimal_selections(steps: int, optimal_selections: np.ndarray, algorith
 
 def plot_arm_statistics(arm_stats: List[dict], algorithms: List[Algorithm], *args):
     """
-    Función OBLIGATORIA.
+    Función OPCIONAL.
     Genera gráficas separadas de Selección de Arms: Ganancias vs Pérdidas para cada algoritmo.
     :param arm_stats: Lista (de diccionarios) con estadísticas de cada brazo por algoritmo.
     :param algorithms: Lista de instancias de algoritmos comparados.
@@ -133,7 +133,7 @@ def plot_arm_statistics(arm_stats: List[dict], algorithms: List[Algorithm], *arg
 
 def plot_regret(steps: int, regret_accumulated: np.ndarray, algorithms: List[Algorithm], *args):
     """
-    Función OPCIONAL.
+    Función OBLIGATORIA.
     Genera la gráfica de Regret Acumulado vs Pasos de Tiempo.
     :param steps: Número de pasos de tiempo.
     :param regret_accumulated: Matriz de regret acumulado (algoritmos x pasos).
