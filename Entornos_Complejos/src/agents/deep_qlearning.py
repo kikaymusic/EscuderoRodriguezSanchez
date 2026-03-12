@@ -1,5 +1,7 @@
 import numpy as np
 from gymnasium.core import Env
+
+from src.rnn.qnetwork import QNetwork
 from .agent import Agent
 from ..policies.policy import Policy
 import torch
@@ -28,7 +30,7 @@ class AgentDeepQLearning(Agent):
     def __init__(self,
                  env: Env,
                  behavior_policy: Policy,
-                 q_network: nn.Module,
+                 q_network: QNetwork,
                  lr: float = 1e-3,
                  buffer_size: int = 10000,
                  batch_size: int = 64,
@@ -63,6 +65,9 @@ class AgentDeepQLearning(Agent):
 
         # Red neuronal para aproximar la función Q
         self.model = q_network.to(self.device)
+        # Inicializamos los pesos de la red neuronal
+        q_network.init_weights_fijos()
+
         # Optimizador y función de pérdida para entrenar la red
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
         self.criterion = nn.MSELoss()

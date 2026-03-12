@@ -6,6 +6,8 @@ matplotlib~=3.10.8
 swig~=4.4.1
 gymnasium[box2d]~=1.2.3
 scikit-learn~=1.8.0
-# pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu126
 ipywidgets~=8.1.8
 pandas~=3.0.1
+pygame~=2.6.1
+torch~=2.10.0
+# pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu126
