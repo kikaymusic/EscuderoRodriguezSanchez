@@ -1,6 +1,6 @@
 import numpy as np
 
-from k_brazos.src.arms import Bandit
+from src.arms import Bandit
 
 
 def calculate_regret(bandido: Bandit, rewards: np.ndarray) -> np.ndarray:
