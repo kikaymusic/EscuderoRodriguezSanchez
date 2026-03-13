@@ -16,8 +16,9 @@ from typing import List
 
 import numpy as np
 import seaborn as sns
+import pandas as pd
 import matplotlib.pyplot as plt
-
+from src.arms.bandit import Bandit
 from ..algorithms.algorithm import Algorithm
 from ..algorithms.epsilon_greedy import EpsilonGreedy
 from ..algorithms.softmax import Softmax
@@ -225,6 +226,8 @@ def plot_regret(steps: int, regret_accumulated: np.ndarray, algorithms: List[Alg
 #    print(f"[{dist}]  Mejor EpsilonGreedy → ε={best_eps}  |  "
 #          f"Mejor Softmax → τ={best_tau}  |  Mejor UCB1 → c={best_k}")
 
+
+
 def plot_best_comparison(df_eps, df_softmax, df_ucb, distribution: str):
     """
     Genera un plot comparando el mejor parámetro de cada familia de algoritmos
@@ -332,5 +335,72 @@ def plot_best_comparison(df_eps, df_softmax, df_ucb, distribution: str):
     plt.show()
 
     # ── Resumen en consola ────────────────────────────────────────────────────
-    print(f"[{dist}]  Mejor EpsilonGreedy → ε={best_eps}  |  "
-          f"Mejor Softmax → τ={best_tau}  |  Mejor UCB1 → c={best_k}")
+    print(f"[{dist}]  EpsilonGreedy → ε={best_eps}  |  "
+          f"Softmax → τ={best_tau}  |  UCB1 → c={best_k}")
+    
+
+
+
+
+def _get_param_label(algo: Algorithm) -> str:
+    """Devuelve el nombre y valor del parámetro propio de cada algoritmo."""
+    if hasattr(algo, 'tau'):
+        return f"τ={algo.tau}"
+    elif hasattr(algo, 'epsilon'):
+        return f"ε={algo.epsilon}"
+    elif hasattr(algo, 'c'):
+        return f"c={algo.c}"
+    return ""
+ 
+ 
+def plot_best_regret_comparison(
+    bandidos: List[Bandit],
+    rewards_list: List[np.ndarray],
+    algorithms: List[Algorithm],
+    dist_names: List[str],
+):
+    """
+    Genera una gráfica comparando el mejor regret acumulado de cada distribución.
+    Para cada distribución selecciona el algoritmo con menor regret acumulado final.
+ 
+    :param bandidos: Lista de instancias de Bandit, una por distribución.
+    :param rewards_list: Lista de matrices (n_algoritmos x steps) devueltas por run_experiment.
+    :param algorithms: Lista de instancias de algoritmos (mismo orden que rewards_list).
+    :param dist_names: Nombres de las distribuciones, e.g. ["Normal", "Binomial", "Bernoulli"].
+    """
+    styles = [
+        {"color": "#2196F3", "linestyle": "-"},
+        {"color": "#FF9800", "linestyle": "-"},
+        {"color": "#4CAF50", "linestyle": "-"},
+    ]
+ 
+    steps = rewards_list[0].shape[1]
+    plt.figure(figsize=(14, 7))
+ 
+    for i, (bandido, rewards, dist_name) in enumerate(zip(bandidos, rewards_list, dist_names)):
+        # mu* real, idéntico a calculate_regret
+        mu_star = bandido.get_expected_value(bandido.optimal_arm)
+ 
+        best_regret = None
+        best_algo   = None
+        best_final  = np.inf
+ 
+        for j, algo in enumerate(algorithms):
+            regret_accum = np.cumsum(mu_star - rewards[j])
+            if regret_accum[-1] < best_final:
+                best_final  = regret_accum[-1]
+                best_regret = regret_accum
+                best_algo   = algo
+ 
+        param_label = _get_param_label(best_algo)
+        algo_name   = type(best_algo).__name__
+        label = f"{dist_name} (mejor {algo_name} {param_label})"
+        plt.plot(range(steps), best_regret, label=label, linewidth=2.5, **styles[i])
+ 
+    plt.xlabel("Pasos de Tiempo", fontsize=14)
+    plt.ylabel("Regret Acumulado", fontsize=14)
+    plt.title("Comparación del Mejor Regret por Distribución", fontsize=16)
+    plt.legend(title="Distribución (mejor algoritmo)", bbox_to_anchor=(1.05, 1),
+               loc="upper left", fontsize=11)
+    plt.tight_layout()
+    plt.show()
