@@ -65,8 +65,6 @@ class AgentDeepQLearning(Agent):
 
         # Red neuronal para aproximar la función Q
         self.model = q_network.to(self.device)
-        # Inicializamos los pesos de la red neuronal
-        q_network.init_weights_fijos()
 
         # Optimizador y función de pérdida para entrenar la red
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
