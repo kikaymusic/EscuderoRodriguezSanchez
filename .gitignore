@@ -3,5 +3,5 @@ __pycache__/
 *.class
 .ipynb_checkpoints/
 data/
-*.pdf
+
 .venv
